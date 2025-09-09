@@ -776,7 +776,7 @@ const Index = () => {
             {selectedCrmItem && (
               <>
                 <DialogHeader className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between pr-12">
                     <DialogTitle className="text-xl">
                       Анализ звонка из CRM
                     </DialogTitle>
