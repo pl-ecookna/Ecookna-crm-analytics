@@ -104,9 +104,9 @@ export const AIAnalyticsModal: React.FC<AIAnalyticsModalProps> = ({ open, onOpen
 
       console.log('Generated SQL:', sql);
 
-      // Step 2: Execute query directly on call_analysis_crm table
+      // Step 2: Execute query directly on crm_analytics table
       const { data: queryData, error: queryError } = await supabase
-        .from('call_analysis_crm')
+        .from('crm_analytics')
         .select('*')
         .limit(50);
       

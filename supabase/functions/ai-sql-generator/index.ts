@@ -23,26 +23,25 @@ serve(async (req) => {
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 
     const systemPrompt = `
-    Ты генератор SQL запросов для PostgreSQL. Таблица: call_analysis_crm
+    Ты генератор SQL запросов для PostgreSQL. Таблица: crm_analytics
     
     КЛЮЧЕВЫЕ ПОЛЯ:
-    - id, call_id, call_datetime, uploaded_at, analyzed_at
-    - client_id, client_phone, user_id, user_name, department, brand
-    - file_status, call_type, call_goal, goal_achieved
-    - conversation_duration_total, conversation_stage_greeting, conversation_stage_request, conversation_stage_solution, conversation_stage_closing
-    - answer_completeness_score (1-5), active_listening_score (1-5), overall_score (1-10)
-    - operator_tonality, burnout_signs, greeting_correct, operator_said_name, operator_thanked, closing_correct
-    - client_nps_category, conflict_risk_level, conflict_moments
-    - operator_strength, operator_weakness, communication_issues, final_conclusion
-    - transcript, transcript_full
-    - deal_type, deal_source, product_type, region, user_notes
+    Служебные: id, call_id, call_datetime, uploaded_at, analyzed_at
+    Метаданные: client_id, client_phone, user_id, user_name, department, brand, call_type, tag
+    Аудио: file_name, file_url, file_status
+    Критерии (boolean): greeting_correct, operator_said_name, cause_identified, cause_clarified, address_clarified, active_listening_done, answer_complete, operator_thanked, client_helped, conflict_resolved
+    Оценки: compliance_score (1-5), conflict_risk_score (1-10), overall_score (1-10)
+    Временные этапы: conversation_stage_greeting, conversation_stage_request, conversation_stage_solution, conversation_stage_closing, conversation_duration_total, conversation_duration_minutes
+    Описательные: operator_tonality, burnout_level, burnout_signs (jsonb), conflict_moments, final_conclusion
+    Транскрипция: transkription, transkription_full_json (jsonb)
+    Вычисляемые: is_first_contact, stages_score, quality_score, call_success
     
     ЗНАЧЕНИЯ (на русском):
-    - operator_tonality: 'Положительная', 'Нейтральная', 'Негативная'
-    - client_nps_category: 'Критик', 'Нейтрал', 'Промоутер'  
-    - conflict_risk_level: 'низкий', 'средний', 'высокий'
-    - file_status: 'new', 'processing', 'completed'
-    - burnout_signs: 'Нет признаков', 'Легкие признаки', 'Явные признаки'
+    - operator_tonality: 'Положительная', 'Нейтральная', 'Негативная', 'Профессиональная'
+    - burnout_level: 'Не выявлено', 'Легкие признаки', 'Явные признаки'
+    - call_success: 'Успешный', 'Средний результат', 'Неуспешный'
+    - file_status: 'new', 'processing', 'completed', 'failed'
+    - tag: может содержать 'new' для первичных обращений
     
     ПРАВИЛА:
     - Возвращай ТОЛЬКО валидный SQL без объяснений
@@ -52,6 +51,7 @@ serve(async (req) => {
     - Для текстового поиска используй ILIKE '%текст%'
     - Все значения данных на русском языке
     - Ограничивай результаты LIMIT 50 если не указано иначе
+    - burnout_signs это jsonb массив, используй jsonb операторы для поиска
     `;
 
     let generatedSQL = '';

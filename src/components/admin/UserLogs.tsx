@@ -33,7 +33,7 @@ const actionLabels = {
 const resourceLabels = {
   call_analysis: 'Анализ звонков КЦ',
   sales_calls_analysis: 'Анализ звонков продаж',
-  call_analysis_crm: 'Звонки из CRM',
+  crm_analytics: 'Звонки из CRM',
   profiles: 'Профили пользователей',
   departments: 'Подразделения',
 };
