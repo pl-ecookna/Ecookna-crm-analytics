@@ -67,10 +67,6 @@ const Index = () => {
   const [crmTotalCount, setCrmTotalCount] = useState(0);
   const crmPageSize = 25;
   
-  // Selected card states for visual feedback
-  const [selectedCallCenterCard, setSelectedCallCenterCard] = useState<'all' | 'success' | 'failed'>('all');
-  const [selectedSalesCard, setSelectedSalesCard] = useState<'all' | 'hot' | 'warm' | 'cold' | 'measured'>('all');
-  const [selectedCrmCard, setSelectedCrmCard] = useState<'all' | 'success' | 'failed' | 'average'>('all');
   
   // Selection and editing states for call center
   const [selectionMode, setSelectionMode] = useState(false);
@@ -493,15 +489,7 @@ const Index = () => {
           <TabsContent value="crm" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Success Rate Card */}
-              <Card 
-                className={`cursor-pointer transition-all ${
-                  selectedCrmCard === 'success' ? 'ring-2 ring-success border-success' : 'hover:shadow-md'
-                }`}
-                onClick={() => {
-                  setCrmActiveFilter(crmActiveFilter === 'success' ? 'all' : 'success');
-                  setSelectedCrmCard(selectedCrmCard === 'success' ? 'all' : 'success');
-                }}
-              >
+              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Успешные звонки</CardTitle>
                   <CheckCircle className="h-4 w-4 text-success" />
@@ -519,15 +507,7 @@ const Index = () => {
               </Card>
 
               {/* Failed Calls Card */}
-              <Card 
-                className={`cursor-pointer transition-all ${
-                  selectedCrmCard === 'failed' ? 'ring-2 ring-destructive border-destructive' : 'hover:shadow-md'
-                }`}
-                onClick={() => {
-                  setCrmActiveFilter(crmActiveFilter === 'failed' ? 'all' : 'failed');
-                  setSelectedCrmCard(selectedCrmCard === 'failed' ? 'all' : 'failed');
-                }}
-              >
+              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Неуспешные звонки</CardTitle>
                   <XCircle className="h-4 w-4 text-destructive" />
@@ -545,15 +525,7 @@ const Index = () => {
               </Card>
 
               {/* Average Result Card */}
-              <Card 
-                className={`cursor-pointer transition-all ${
-                  selectedCrmCard === 'average' ? 'ring-2 ring-warning border-warning' : 'hover:shadow-md'
-                }`}
-                onClick={() => {
-                  setCrmCallSuccessFilter(crmCallSuccessFilter === 'Средний результат' ? 'all' : 'Средний результат');
-                  setSelectedCrmCard(selectedCrmCard === 'average' ? 'all' : 'average');
-                }}
-              >
+              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Средний результат</CardTitle>
                   <TrendingDown className="h-4 w-4 text-warning" />
@@ -571,16 +543,7 @@ const Index = () => {
               </Card>
 
               {/* Average Score Card */}
-              <Card 
-                className={`cursor-pointer transition-all ${
-                  selectedCrmCard === 'all' ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md'
-                }`}
-                onClick={() => {
-                  setCrmActiveFilter('all');
-                  setCrmCallSuccessFilter('all');
-                  setSelectedCrmCard('all');
-                }}
-              >
+              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Средняя оценка</CardTitle>
                   <Star className="h-4 w-4 text-warning" />
