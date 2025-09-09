@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Phone, CheckCircle, Loader2, XCircle, Clock } from "lucide-react";
+import { Phone, CheckCircle, Loader2, XCircle, Clock, Calendar } from "lucide-react";
 
 interface CrmCallCardProps {
   call: {
@@ -103,11 +103,13 @@ export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick }) => {
             <div className="flex items-center gap-2 mb-1">
               {/* Цветной индикатор статуса */}
               <div className={`w-2 h-2 rounded-full ${getSuccessIndicatorColor(call.call_success)}`} />
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <span className="font-mono">{call.call_id}</span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground">{formatDateTime(call.call_datetime)}</span>
-              </div>
+              <span className="font-mono font-semibold text-foreground">{call.call_id}</span>
+            </div>
+            
+            {/* Дата */}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+              <Calendar className="h-3 w-3" />
+              <span>{formatDateTime(call.call_datetime)}</span>
             </div>
             
             {/* Имя оператора */}
@@ -144,7 +146,7 @@ export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick }) => {
           </div>
           
           {/* Тип звонка */}
-          <Badge variant="outline" className="text-xs h-5">
+          <Badge variant="secondary" className="text-xs h-5">
             {call.call_type}
           </Badge>
         </div>
