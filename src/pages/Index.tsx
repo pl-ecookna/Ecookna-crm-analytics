@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Search, CheckCircle, XCircle, Loader2, FileText, Target, TrendingDown, Star, Clock, ChevronDown, ChevronUp, Trash2, Edit3, Check, X, Phone, MapPin, Package, Globe, MessageSquare, BarChart3, ExternalLink } from "lucide-react";
+import { CrmCallCard } from "@/components/CrmCallCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
@@ -701,89 +702,25 @@ const Index = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {crmFilteredData.map((analysis) => (
-                      <Card 
-                        key={analysis.id} 
-                        className="cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => setSelectedCrmItem(analysis)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold">{analysis.user_name}</h3>
-                                <Badge variant="outline">
-                                  {analysis.department || 'Не указан'}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {formatDate(analysis.call_datetime)}
-                              </p>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              {analysis.overall_score && (
-                                <div className="flex items-center gap-1">
-                                  {renderStarRating(analysis.overall_score)}
-                                </div>
-                              )}
-                              
-                              <Badge className={`text-xs ${
-                                analysis.call_success === 'Успешный' ? 'bg-success/10 text-success border-success/20' :
-                                analysis.call_success === 'Средний результат' ? 'bg-warning/10 text-warning border-warning/20' :
-                                analysis.call_success === 'Неуспешный' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-                                'bg-muted/10 text-muted-foreground border-muted/20'
-                              }`}>
-                                {analysis.call_success || 'Не указан'}
-                              </Badge>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">Клиент:</span>
-                              <p>{analysis.client_phone || 'Не указан'}</p>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Бренд:</span>
-                              <p>{analysis.brand || 'Не указан'}</p>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Тип звонка:</span>
-                              <p>{analysis.call_type || 'Не указан'}</p>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Длительность:</span>
-                              <p>{analysis.conversation_duration_total || 'Не указана'}</p>
-                            </div>
-                          </div>
-
-                          {/* Analysis Results */}
-                          <div className="flex flex-wrap gap-1 mt-3">
-                            {analysis.burnout_level && (
-                              <Badge className={`text-xs ${
-                                analysis.burnout_level === 'Не выявлено' ? 'bg-success/10 text-success border-success/20' :
-                                analysis.burnout_level === 'Легкие признаки' ? 'bg-warning/10 text-warning border-warning/20' :
-                                analysis.burnout_level === 'Явные признаки' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-                                'bg-muted/10 text-muted-foreground border-muted/20'
-                              }`}>
-                                Выгорание: {analysis.burnout_level}
-                              </Badge>
-                            )}
-                            {analysis.operator_tonality && (
-                              <Badge className={`${getTonalityColor(analysis.operator_tonality)} text-xs`}>
-                                {analysis.operator_tonality}
-                              </Badge>
-                            )}
-                            {analysis.is_first_contact !== null && (
-                              <Badge variant="outline" className="text-xs">
-                                {analysis.is_first_contact ? 'Первичное' : 'Повторное'} обращение
-                              </Badge>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <CrmCallCard 
+                        key={analysis.id}
+                        call={{
+                          id: analysis.id,
+                          call_id: analysis.call_id,
+                          call_datetime: analysis.call_datetime,
+                          user_name: analysis.user_name,
+                          department: analysis.department,
+                          brand: analysis.brand,
+                          overall_score: analysis.overall_score || 0,
+                          call_success: analysis.call_success || 'Неизвестно',
+                          conversation_duration_minutes: analysis.conversation_duration_minutes || 0,
+                          call_type: analysis.call_type,
+                          file_status: analysis.file_status
+                        }}
+                        onClick={(id) => setSelectedCrmItem(analysis)}
+                       />
                     ))}
                   </div>
                 )}
