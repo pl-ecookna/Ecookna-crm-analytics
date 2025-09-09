@@ -54,7 +54,6 @@ const Index = () => {
   const salesPageSize = 25;
   
   // CRM States
-  const [crmSearchTerm, setCrmSearchTerm] = useState("");
   const [selectedCrmItem, setSelectedCrmItem] = useState<CrmCallAnalysis | null>(null);
   const [crmAnalyses, setCrmAnalyses] = useState<CrmCallAnalysis[]>([]);
   const [crmLoading, setCrmLoading] = useState(true);
@@ -62,7 +61,7 @@ const Index = () => {
   const [crmEmployeeFilter, setCrmEmployeeFilter] = useState<string>('all');
   const [crmDepartmentFilter, setCrmDepartmentFilter] = useState<string>('all');
   const [crmBrandFilter, setCrmBrandFilter] = useState<string>('all');
-  const [crmStatusFilter, setCrmStatusFilter] = useState<string>('all');
+  const [crmCallSuccessFilter, setCrmCallSuccessFilter] = useState<string>('all');
   // Pagination for CRM
   const [crmCurrentPage, setCrmCurrentPage] = useState(1);
   const [crmTotalCount, setCrmTotalCount] = useState(0);
@@ -250,7 +249,7 @@ const Index = () => {
       setCrmCurrentPage(1);
       fetchCrmAnalyses(1);
     }
-  }, [crmSearchTerm, crmActiveFilter]);
+  }, [crmActiveFilter]);
 
   const fetchAnalyses = async (page = 1) => {
     try {
@@ -428,6 +427,11 @@ const Index = () => {
       filtered = filtered.filter(item => item.call_success === 'Неуспешный');
     }
     
+    // Фильтр по call_success
+    if (crmCallSuccessFilter !== 'all') {
+      filtered = filtered.filter(item => item.call_success === crmCallSuccessFilter);
+    }
+    
     // Фильтр по сотрудникам
     if (crmEmployeeFilter !== 'all') {
       filtered = filtered.filter(item => item.user_name === crmEmployeeFilter);
@@ -443,25 +447,8 @@ const Index = () => {
       filtered = filtered.filter(item => item.brand === crmBrandFilter);
     }
     
-    // Фильтр по статусу обработки
-    if (crmStatusFilter !== 'all') {
-      filtered = filtered.filter(item => item.file_status === crmStatusFilter);
-    }
-    
-    // Поиск
-    if (crmSearchTerm) {
-      filtered = filtered.filter(item =>
-        item.transkription?.toLowerCase().includes(crmSearchTerm.toLowerCase()) ||
-        item.user_name?.toLowerCase().includes(crmSearchTerm.toLowerCase()) ||
-        item.client_phone?.toLowerCase().includes(crmSearchTerm.toLowerCase()) ||
-        item.department?.toLowerCase().includes(crmSearchTerm.toLowerCase()) ||
-        item.brand?.toLowerCase().includes(crmSearchTerm.toLowerCase()) ||
-        item.final_conclusion?.toLowerCase().includes(crmSearchTerm.toLowerCase())
-      );
-    }
-    
     return filtered;
-  }, [crmAnalyses, crmActiveFilter, crmEmployeeFilter, crmDepartmentFilter, crmBrandFilter, crmStatusFilter, crmSearchTerm]);
+  }, [crmAnalyses, crmActiveFilter, crmEmployeeFilter, crmDepartmentFilter, crmBrandFilter, crmCallSuccessFilter]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -586,14 +573,20 @@ const Index = () => {
                 <CardTitle>Фильтры</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Поиск</label>
-                    <Input
-                      placeholder="Поиск по звонкам..."
-                      value={crmSearchTerm}
-                      onChange={(e) => setCrmSearchTerm(e.target.value)}
-                    />
+                    <label className="text-sm font-medium">Результат звонка</label>
+                    <Select value={crmCallSuccessFilter} onValueChange={setCrmCallSuccessFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Все результаты" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все результаты</SelectItem>
+                        <SelectItem value="Успешный">Успешный</SelectItem>
+                        <SelectItem value="Неуспешный">Неуспешный</SelectItem>
+                        <SelectItem value="Средний результат">Средний результат</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="space-y-2">
@@ -639,39 +632,6 @@ const Index = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Статус обработки</label>
-                    <Select value={crmStatusFilter} onValueChange={setCrmStatusFilter}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Все статусы" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Все статусы</SelectItem>
-                        <SelectItem value="new">Новый</SelectItem>
-                        <SelectItem value="processing">Обрабатывается</SelectItem>
-                        <SelectItem value="completed">Завершено</SelectItem>
-                        <SelectItem value="failed">Ошибка</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Действия</label>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setCrmSearchTerm('');
-                        setCrmEmployeeFilter('all');
-                        setCrmDepartmentFilter('all');
-                        setCrmBrandFilter('all');
-                        setCrmStatusFilter('all');
-                      }}
-                      className="w-full"
-                    >
-                      Сбросить фильтры
-                    </Button>
                   </div>
                 </div>
               </CardContent>
