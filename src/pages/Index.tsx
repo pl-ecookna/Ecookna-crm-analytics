@@ -479,9 +479,7 @@ const Index = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="call-center">Колл-центр</TabsTrigger>
-            <TabsTrigger value="sales">Отдел продаж</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-1">
             <TabsTrigger value="crm">Звонки из CRM (КЦ)</TabsTrigger>
           </TabsList>
 
