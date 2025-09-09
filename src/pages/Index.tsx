@@ -70,7 +70,7 @@ const Index = () => {
   // Selected card states for visual feedback
   const [selectedCallCenterCard, setSelectedCallCenterCard] = useState<'all' | 'success' | 'failed'>('all');
   const [selectedSalesCard, setSelectedSalesCard] = useState<'all' | 'hot' | 'warm' | 'cold' | 'measured'>('all');
-  const [selectedCrmCard, setSelectedCrmCard] = useState<'all' | 'success' | 'failed'>('all');
+  const [selectedCrmCard, setSelectedCrmCard] = useState<'all' | 'success' | 'failed' | 'average'>('all');
   
   // Selection and editing states for call center
   const [selectionMode, setSelectionMode] = useState(false);
@@ -99,6 +99,8 @@ const Index = () => {
   // CRM Metrics state (independent of pagination)
   const [crmMetricsData, setCrmMetricsData] = useState<{
     successfulCount: number;
+    failedCount: number;
+    averageResultCount: number;
     totalScoreSum: number;
     scoredCount: number;
     employees: string[];
@@ -106,6 +108,8 @@ const Index = () => {
     brands: string[];
   }>({
     successfulCount: 0,
+    failedCount: 0,
+    averageResultCount: 0,
     totalScoreSum: 0,
     scoredCount: 0,
     employees: [],
@@ -177,6 +181,8 @@ const Index = () => {
 
       // Calculate metrics from all data
       const successfulCount = (data as any)?.filter((item: any) => item.call_success === 'Успешный').length || 0;
+      const failedCount = (data as any)?.filter((item: any) => item.call_success === 'Неуспешный').length || 0;
+      const averageResultCount = (data as any)?.filter((item: any) => item.call_success === 'Средний результат').length || 0;
       const totalScoreSum = (data as any)?.reduce((sum: number, item: any) => sum + (item.overall_score || 0), 0) || 0;
       const scoredCount = (data as any)?.filter((item: any) => item.overall_score !== null).length || 0;
       
@@ -187,6 +193,8 @@ const Index = () => {
 
       setCrmMetricsData({
         successfulCount,
+        failedCount,
+        averageResultCount,
         totalScoreSum,
         scoredCount,
         employees: employees.sort(),
@@ -483,7 +491,7 @@ const Index = () => {
 
           {/* CRM Tab Content */}
           <TabsContent value="crm" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Success Rate Card */}
               <Card 
                 className={`cursor-pointer transition-all ${
@@ -526,13 +534,37 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-destructive">
-                    {crmMetricsLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : 
-                      (crmTotalCount - crmMetricsData.successfulCount)
-                    }
+                    {crmMetricsLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : crmMetricsData.failedCount}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {crmMetricsLoading ? 'Загрузка...' : 
-                      `${crmTotalCount > 0 ? (((crmTotalCount - crmMetricsData.successfulCount) / crmTotalCount) * 100).toFixed(1) : 0}% от общего количества`
+                      `${crmTotalCount > 0 ? ((crmMetricsData.failedCount / crmTotalCount) * 100).toFixed(1) : 0}% от общего количества`
+                    }
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Average Result Card */}
+              <Card 
+                className={`cursor-pointer transition-all ${
+                  selectedCrmCard === 'average' ? 'ring-2 ring-warning border-warning' : 'hover:shadow-md'
+                }`}
+                onClick={() => {
+                  setCrmCallSuccessFilter(crmCallSuccessFilter === 'Средний результат' ? 'all' : 'Средний результат');
+                  setSelectedCrmCard(selectedCrmCard === 'average' ? 'all' : 'average');
+                }}
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Средний результат</CardTitle>
+                  <TrendingDown className="h-4 w-4 text-warning" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-warning">
+                    {crmMetricsLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : crmMetricsData.averageResultCount}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {crmMetricsLoading ? 'Загрузка...' : 
+                      `${crmTotalCount > 0 ? ((crmMetricsData.averageResultCount / crmTotalCount) * 100).toFixed(1) : 0}% от общего количества`
                     }
                   </p>
                 </CardContent>
@@ -545,6 +577,7 @@ const Index = () => {
                 }`}
                 onClick={() => {
                   setCrmActiveFilter('all');
+                  setCrmCallSuccessFilter('all');
                   setSelectedCrmCard('all');
                 }}
               >
