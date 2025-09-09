@@ -475,6 +475,16 @@ const Index = () => {
               <BarChart3 className="h-4 w-4 mr-2" />
               AI Аналитика
             </Button>
+            <Button asChild variant="secondary">
+              <a 
+                href="https://bi.entechai.ru/public/dashboard/26e07d8c-2451-4608-950b-bce04dce9a58"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Отклоненные лиды
+              </a>
+            </Button>
           </div>
         </div>
 
