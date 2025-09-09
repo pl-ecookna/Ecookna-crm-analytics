@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import { AIAnalyticsModal } from "@/components/AIAnalyticsModal";
 import TranscriptDisplay from "@/components/TranscriptDisplay";
+import { CallDetailsAccordion } from "@/components/CallDetailsAccordion";
 import { Header } from "@/components/Header";
 
 type CallAnalysis = Tables<'call_analysis'>;
@@ -823,163 +824,9 @@ const Index = () => {
                   </div>
                 </DialogHeader>
 
-                <Tabs defaultValue="overview" className="mt-6">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="overview">Обзор</TabsTrigger>
-                    <TabsTrigger value="crm-data">Данные CRM</TabsTrigger>
-                    <TabsTrigger value="analysis">Анализ разговора</TabsTrigger>
-                    <TabsTrigger value="transcript">Транскрипция</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="overview" className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg">Основные показатели</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm font-medium mb-2">Результат звонка</p>
-                              <Badge className={
-                                selectedCrmItem.call_success === 'Успешный' ? "bg-success/10 text-success border-success/20" : 
-                                selectedCrmItem.call_success === 'Средний результат' ? "bg-warning/10 text-warning border-warning/20" :
-                                selectedCrmItem.call_success === 'Неуспешный' ? "bg-destructive/10 text-destructive border-destructive/20" :
-                                "bg-muted/10 text-muted-foreground border-muted/20"
-                              }>
-                                {selectedCrmItem.call_success || "Не указан"}
-                              </Badge>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium mb-2">Общая оценка</p>
-                              {selectedCrmItem.overall_score ? renderStarRating(selectedCrmItem.overall_score) : <span className="text-muted-foreground">Не оценено</span>}
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm font-medium mb-2">Баллы за этапы</p>
-                              <span className="text-sm font-medium">{selectedCrmItem.stages_score || 0}/6</span>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium mb-2">Баллы за качество</p>
-                              <span className="text-sm font-medium">{selectedCrmItem.quality_score || 0}/4</span>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm font-medium mb-2">Правильное приветствие</p>
-                              <Badge className={selectedCrmItem.greeting_correct ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground"}>
-                                {selectedCrmItem.greeting_correct ? "Да" : "Нет"}
-                              </Badge>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium mb-2">Помог клиенту</p>
-                              <Badge className={selectedCrmItem.client_helped ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground"}>
-                                {selectedCrmItem.client_helped ? "Да" : "Нет"}
-                              </Badge>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm font-medium mb-2">Назвал имя</p>
-                              <Badge className={selectedCrmItem.operator_said_name ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground"}>
-                                {selectedCrmItem.operator_said_name ? "Да" : "Нет"}
-                              </Badge>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium mb-2">Поблагодарил</p>
-                              <Badge className={selectedCrmItem.operator_thanked ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground"}>
-                                {selectedCrmItem.operator_thanked ? "Да" : "Нет"}
-                              </Badge>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg">Качественные показатели</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div>
-                            <p className="text-sm font-medium mb-2">Соответствие регламенту</p>
-                            <Badge className={`text-xs ${
-                              (selectedCrmItem.compliance_score || 0) >= 4 ? 'bg-success/10 text-success border-success/20' :
-                              (selectedCrmItem.compliance_score || 0) >= 3 ? 'bg-warning/10 text-warning border-warning/20' :
-                              'bg-destructive/10 text-destructive border-destructive/20'
-                            }`}>
-                              {selectedCrmItem.compliance_score || 0}/5
-                            </Badge>
-                          </div>
-
-                          {selectedCrmItem.operator_tonality && (
-                            <div>
-                              <p className="text-sm font-medium mb-2">Тональность оператора</p>
-                              <Badge className={getTonalityColor(selectedCrmItem.operator_tonality)}>
-                                {selectedCrmItem.operator_tonality}
-                              </Badge>
-                            </div>
-                          )}
-
-                          <div>
-                            <p className="text-sm font-medium mb-2">Уровень выгорания</p>
-                            <Badge className={`text-xs ${
-                              selectedCrmItem.burnout_level === 'Не выявлено' ? 'bg-success/10 text-success border-success/20' :
-                              selectedCrmItem.burnout_level === 'Легкие признаки' ? 'bg-warning/10 text-warning border-warning/20' :
-                              selectedCrmItem.burnout_level === 'Явные признаки' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-                              'bg-muted/10 text-muted-foreground border-muted/20'
-                            }`}>
-                              {selectedCrmItem.burnout_level || 'Не указан'}
-                            </Badge>
-                          </div>
-
-                          <div>
-                            <p className="text-sm font-medium mb-2">Конфликт разрешен</p>
-                            <div className="flex items-center gap-2">
-                              {selectedCrmItem.conflict_resolved ? (
-                                <CheckCircle className="h-4 w-4 text-success" />
-                              ) : (
-                                <XCircle className="h-4 w-4 text-destructive" />
-                              )}
-                              <span className="text-sm">{selectedCrmItem.conflict_resolved ? 'Да' : 'Нет'}</span>
-                            </div>
-                          </div>
-
-                          <div>
-                            <p className="text-sm font-medium mb-2">Риск конфликта</p>
-                            <Badge className={`text-xs ${
-                              (selectedCrmItem.conflict_risk_score || 0) <= 3 ? 'bg-success/10 text-success border-success/20' :
-                              (selectedCrmItem.conflict_risk_score || 0) <= 6 ? 'bg-warning/10 text-warning border-warning/20' :
-                              'bg-destructive/10 text-destructive border-destructive/20'
-                            }`}>
-                              {selectedCrmItem.conflict_risk_score || 'Не указан'}/10
-                            </Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="transcript" className="space-y-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">Транскрипция разговора</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {selectedCrmItem.transkription ? (
-                          <TranscriptDisplay transcript={selectedCrmItem.transkription} />
-                        ) : (
-                          <p className="text-muted-foreground text-center py-8">
-                            Транскрипция недоступна
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
+                <div className="mt-6">
+                  <CallDetailsAccordion call={selectedCrmItem} />
+                </div>
               </>
             )}
           </DialogContent>
