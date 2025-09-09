@@ -30,6 +30,16 @@ interface CallDetailsAccordionProps {
 
 export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call }) => {
   
+  // Функция декодирования UTF-8
+  const decodeUtf8 = (str: string | null): string | null => {
+    if (!str) return null;
+    try {
+      return decodeURIComponent(escape(str));
+    } catch {
+      return str;
+    }
+  };
+  
   // Утилитарные функции
   const calculateCriteriaScore = () => {
     const criteria = [
@@ -461,7 +471,10 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             </CardHeader>
             <CardContent>
               {call.transkription ? (
-                <TranscriptDisplay transcript={call.transkription} />
+                <TranscriptDisplay 
+                  transcript={call.transkription} 
+                  operatorName={decodeUtf8(call.user_name) || undefined}
+                />
               ) : (
                 <p className="text-muted-foreground text-center py-8">
                   Транскрипция недоступна

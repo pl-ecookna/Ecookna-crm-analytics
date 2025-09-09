@@ -10,9 +10,11 @@ interface TranscriptLine {
 
 interface TranscriptDisplayProps {
   transcript: string | null;
+  operatorName?: string;
 }
 
-const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript }) => {
+const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript, operatorName }) => {
+  const displayOperatorName = operatorName || 'Оператор';
   if (!transcript) {
     return <p className="text-muted-foreground">Транскрипция недоступна</p>;
   }
@@ -119,7 +121,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript }) => 
                   <span className={`text-xs font-medium ${
                     line.role === 'Оператор' ? 'text-blue-700' : 'text-green-700'
                   }`}>
-                    {line.role}
+                    {line.role === 'Оператор' ? displayOperatorName : line.role}
                   </span>
                   <span className="text-xs text-muted-foreground">#{line.number}</span>
                 </div>
@@ -159,12 +161,12 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript }) => 
                     : 'bg-green-50 border border-green-200 text-green-900'
                 }`}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-medium ${
-                    role === 'Оператор' ? 'text-blue-700' : 'text-green-700'
-                  }`}>
-                    {role}
-                  </span>
+                 <div className="flex items-center gap-2 mb-1">
+                   <span className={`text-xs font-medium ${
+                     role === 'Оператор' ? 'text-blue-700' : 'text-green-700'
+                   }`}>
+                     {role === 'Оператор' ? displayOperatorName : role}
+                   </span>
                   <span className="text-xs text-muted-foreground">#{index + 1}</span>
                 </div>
                 <p className="text-sm leading-relaxed">{sentence.trim()}</p>
@@ -200,12 +202,12 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript }) => 
                 : 'bg-green-50 border border-green-200 text-green-900'
             }`}
           >
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`text-xs font-medium ${
-                line.role === 'Оператор' ? 'text-blue-700' : 'text-green-700'
-              }`}>
-                {line.role}
-              </span>
+             <div className="flex items-center gap-2 mb-1">
+               <span className={`text-xs font-medium ${
+                 line.role === 'Оператор' ? 'text-blue-700' : 'text-green-700'
+               }`}>
+                 {line.role === 'Оператор' ? displayOperatorName : line.role}
+               </span>
               <span className="text-xs text-muted-foreground">#{line.number}</span>
             </div>
             <p className="text-sm leading-relaxed">{line.text}</p>
