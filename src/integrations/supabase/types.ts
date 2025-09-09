@@ -248,6 +248,153 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_analytics: {
+        Row: {
+          active_listening_done: boolean | null
+          address_clarified: boolean | null
+          analyzed_at: string | null
+          answer_complete: boolean | null
+          brand: string | null
+          burnout_level: string | null
+          burnout_signs: Json | null
+          call_datetime: string
+          call_id: string
+          call_success: string | null
+          call_type: string | null
+          cause_clarified: boolean | null
+          cause_identified: boolean | null
+          client_helped: boolean | null
+          client_id: string | null
+          client_phone: string | null
+          compliance_score: number | null
+          conflict_moments: string | null
+          conflict_resolved: boolean | null
+          conflict_risk_score: number | null
+          conversation_duration_minutes: number | null
+          conversation_duration_total: string | null
+          conversation_stage_closing: string | null
+          conversation_stage_greeting: string | null
+          conversation_stage_request: string | null
+          conversation_stage_solution: string | null
+          department: string | null
+          file_name: string | null
+          file_status: string | null
+          file_url: string
+          final_conclusion: string | null
+          greeting_correct: boolean | null
+          id: number
+          is_first_contact: boolean | null
+          operator_said_name: boolean | null
+          operator_thanked: boolean | null
+          operator_tonality: string | null
+          overall_score: number | null
+          quality_score: number | null
+          stages_score: number | null
+          tag: string | null
+          transkription: string | null
+          transkription_full_json: Json | null
+          uploaded_at: string | null
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          active_listening_done?: boolean | null
+          address_clarified?: boolean | null
+          analyzed_at?: string | null
+          answer_complete?: boolean | null
+          brand?: string | null
+          burnout_level?: string | null
+          burnout_signs?: Json | null
+          call_datetime: string
+          call_id: string
+          call_success?: string | null
+          call_type?: string | null
+          cause_clarified?: boolean | null
+          cause_identified?: boolean | null
+          client_helped?: boolean | null
+          client_id?: string | null
+          client_phone?: string | null
+          compliance_score?: number | null
+          conflict_moments?: string | null
+          conflict_resolved?: boolean | null
+          conflict_risk_score?: number | null
+          conversation_duration_minutes?: number | null
+          conversation_duration_total?: string | null
+          conversation_stage_closing?: string | null
+          conversation_stage_greeting?: string | null
+          conversation_stage_request?: string | null
+          conversation_stage_solution?: string | null
+          department?: string | null
+          file_name?: string | null
+          file_status?: string | null
+          file_url: string
+          final_conclusion?: string | null
+          greeting_correct?: boolean | null
+          id?: number
+          is_first_contact?: boolean | null
+          operator_said_name?: boolean | null
+          operator_thanked?: boolean | null
+          operator_tonality?: string | null
+          overall_score?: number | null
+          quality_score?: number | null
+          stages_score?: number | null
+          tag?: string | null
+          transkription?: string | null
+          transkription_full_json?: Json | null
+          uploaded_at?: string | null
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          active_listening_done?: boolean | null
+          address_clarified?: boolean | null
+          analyzed_at?: string | null
+          answer_complete?: boolean | null
+          brand?: string | null
+          burnout_level?: string | null
+          burnout_signs?: Json | null
+          call_datetime?: string
+          call_id?: string
+          call_success?: string | null
+          call_type?: string | null
+          cause_clarified?: boolean | null
+          cause_identified?: boolean | null
+          client_helped?: boolean | null
+          client_id?: string | null
+          client_phone?: string | null
+          compliance_score?: number | null
+          conflict_moments?: string | null
+          conflict_resolved?: boolean | null
+          conflict_risk_score?: number | null
+          conversation_duration_minutes?: number | null
+          conversation_duration_total?: string | null
+          conversation_stage_closing?: string | null
+          conversation_stage_greeting?: string | null
+          conversation_stage_request?: string | null
+          conversation_stage_solution?: string | null
+          department?: string | null
+          file_name?: string | null
+          file_status?: string | null
+          file_url?: string
+          final_conclusion?: string | null
+          greeting_correct?: boolean | null
+          id?: number
+          is_first_contact?: boolean | null
+          operator_said_name?: boolean | null
+          operator_thanked?: boolean | null
+          operator_tonality?: string | null
+          overall_score?: number | null
+          quality_score?: number | null
+          stages_score?: number | null
+          tag?: string | null
+          transkription?: string | null
+          transkription_full_json?: Json | null
+          uploaded_at?: string | null
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           brand: string | null
