@@ -545,8 +545,8 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               </CardContent>
             </Card>
 
-            {/* CSI Score (плейсхолдер) */}
-            <Card className="opacity-60">
+            {/* CSI Score */}
+            <Card className={(call as any).csi_score == null ? "opacity-60" : ""}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Smile className="h-4 w-4" />
@@ -557,19 +557,37 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Оценка</span>
-                    <span className="text-2xl font-bold text-muted-foreground">—</span>
+                    {(call as any).csi_score != null ? (
+                      <span className={`text-2xl font-bold ${(call as any).csi_score === 1 ? 'text-success' : 'text-destructive'}`}>
+                        {(call as any).csi_score}
+                      </span>
+                    ) : (
+                      <span className="text-2xl font-bold text-muted-foreground">—</span>
+                    )}
                   </div>
-                  <Progress 
-                    value={0} 
-                    className="h-3 opacity-50"
-                  />
-                  <span className="text-xs text-muted-foreground">Нет данных</span>
+                  {(call as any).csi_score != null ? (
+                    <Progress 
+                      value={(call as any).csi_score * 100} 
+                      className="h-3"
+                    />
+                  ) : (
+                    <Progress 
+                      value={0} 
+                      className="h-3 opacity-50"
+                    />
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {(call as any).csi_score != null 
+                      ? ((call as any).csi_score === 1 ? 'Позитивная оценка' : 'Негативная оценка')
+                      : 'Нет данных'
+                    }
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
-            {/* FCR Score (плейсхолдер) */}
-            <Card className="opacity-60">
+            {/* FCR Score */}
+            <Card className={(call as any).fcr_score == null ? "opacity-60" : ""}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <CheckCircle className="h-4 w-4" />
@@ -580,13 +598,31 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Оценка</span>
-                    <span className="text-2xl font-bold text-muted-foreground">—</span>
+                    {(call as any).fcr_score != null ? (
+                      <span className={`text-2xl font-bold ${Number((call as any).fcr_score) === 1 ? 'text-success' : 'text-destructive'}`}>
+                        {Number((call as any).fcr_score)}
+                      </span>
+                    ) : (
+                      <span className="text-2xl font-bold text-muted-foreground">—</span>
+                    )}
                   </div>
-                  <Progress 
-                    value={0} 
-                    className="h-3 opacity-50"
-                  />
-                  <span className="text-xs text-muted-foreground">Нет данных</span>
+                  {(call as any).fcr_score != null ? (
+                    <Progress 
+                      value={Number((call as any).fcr_score) * 100} 
+                      className="h-3"
+                    />
+                  ) : (
+                    <Progress 
+                      value={0} 
+                      className="h-3 opacity-50"
+                    />
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {(call as any).fcr_score != null 
+                      ? (Number((call as any).fcr_score) === 1 ? 'Позитивная оценка' : 'Негативная оценка')
+                      : 'Нет данных'
+                    }
+                  </span>
                 </div>
               </CardContent>
             </Card>
