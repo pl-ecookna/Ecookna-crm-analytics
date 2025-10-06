@@ -614,26 +614,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4">
           <div className="space-y-4">
-            {/* Результат звонка */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Результат звонка
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Badge className={
-                  call.call_success === 'Успешный' ? "bg-success/10 text-success border-success/20 text-lg px-4 py-2" : 
-                  call.call_success === 'Средний результат' ? "bg-warning/10 text-warning border-warning/20 text-lg px-4 py-2" :
-                  call.call_success === 'Неуспешный' ? "bg-destructive/10 text-destructive border-destructive/20 text-lg px-4 py-2" :
-                  "bg-muted/10 text-muted-foreground border-muted/20 text-lg px-4 py-2"
-                }>
-                  {call.call_success || "Не указан"}
-                </Badge>
-              </CardContent>
-            </Card>
-
             {/* Тональность и выгорание */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
