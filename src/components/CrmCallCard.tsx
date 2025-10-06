@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Phone, CheckCircle, Loader2, XCircle, Clock, Calendar } from "lucide-react";
+import { Phone, CheckCircle, Loader2, XCircle, Clock, Calendar, User, Building, Briefcase } from "lucide-react";
 
 interface CrmCallCardProps {
   call: {
@@ -16,6 +16,7 @@ interface CrmCallCardProps {
     conversation_duration_minutes: number;
     call_type: string;
     file_status: string;
+    client_phone: string | null;
   };
   onClick: (id: number) => void;
 }
@@ -113,13 +114,21 @@ export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick }) => {
             </div>
             
             {/* Имя оператора */}
-            <div className="font-medium text-sm mb-1 truncate">
-              {decodeUserName(call.user_name)}
+            <div className="flex items-center gap-1.5 font-medium text-sm mb-1 truncate">
+              <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              <span className="truncate">{decodeUserName(call.user_name)}</span>
             </div>
             
-            {/* Бренд и отдел */}
-            <div className="text-xs text-muted-foreground truncate">
-              {call.brand} • {call.department}
+            {/* Бренд */}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5 truncate">
+              <Building className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{call.brand}</span>
+            </div>
+            
+            {/* Отдел */}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
+              <Briefcase className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{call.department}</span>
             </div>
           </div>
           
@@ -139,10 +148,20 @@ export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick }) => {
         
         {/* Нижняя часть */}
         <div className="flex items-center justify-between pt-2 border-t border-border/50">
-          {/* Длительность */}
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Phone className="h-3 w-3" />
-            <span>{formatDuration(call.conversation_duration_minutes)}</span>
+          <div className="flex items-center gap-3">
+            {/* Длительность */}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>{formatDuration(call.conversation_duration_minutes)}</span>
+            </div>
+            
+            {/* Телефон клиента */}
+            {call.client_phone && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Phone className="h-3 w-3" />
+                <span>{call.client_phone}</span>
+              </div>
+            )}
           </div>
           
           {/* Тип звонка */}

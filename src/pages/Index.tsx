@@ -682,7 +682,8 @@ const Index = () => {
                           call_success: analysis.call_success || 'Неизвестно',
                           conversation_duration_minutes: analysis.conversation_duration_minutes || 0,
                           call_type: analysis.call_type,
-                          file_status: analysis.file_status
+                          file_status: analysis.file_status,
+                          client_phone: analysis.client_phone
                         }}
                         onClick={(id) => setSelectedCrmItem(analysis)}
                        />
