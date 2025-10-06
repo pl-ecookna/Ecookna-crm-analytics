@@ -736,7 +736,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
         <AccordionContent className="px-4 pb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Оператор */}
-            <Card className="opacity-60">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <User className="h-4 w-4" />
@@ -746,38 +746,56 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Clock className="h-4 w-4" />
                     <span className="text-sm">Длительность речи</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">
+                    {(call as any).operator_speech_duration ? `${(call as any).operator_speech_duration.toFixed(1)} сек` : '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    <BarChart3 className="h-4 w-4" />
                     <span className="text-sm">Количество слов</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">
+                    {(call as any).operator_words_count ?? '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-muted-foreground" />
+                    <Activity className="h-4 w-4" />
                     <span className="text-sm">Темп речи</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">
+                    {(call as any).operator_speech_rate ? `${(call as any).operator_speech_rate.toFixed(1)} сл/мин` : '—'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    <span className="text-sm">Средняя скорость</span>
+                  </div>
+                  <span className="text-sm font-medium">
+                    {(call as any).agent_speech_speed_words_all_call_mean ? `${(call as any).agent_speech_speed_words_all_call_mean.toFixed(1)} сл/мин` : '—'}
+                  </span>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Процент речи</span>
-                    <span className="text-sm text-muted-foreground">—</span>
+                    <span className="text-sm font-medium">
+                      {(call as any).percentage_speech_operator ? `${((call as any).percentage_speech_operator * 100).toFixed(1)}%` : '—'}
+                    </span>
                   </div>
-                  <Progress value={0} className="h-2 opacity-50" />
+                  {(call as any).percentage_speech_operator && (
+                    <Progress value={(call as any).percentage_speech_operator * 100} className="h-2" />
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
               </CardContent>
             </Card>
 
             {/* Клиент */}
-            <Card className="opacity-60">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Phone className="h-4 w-4" />
@@ -787,33 +805,42 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Clock className="h-4 w-4" />
                     <span className="text-sm">Длительность речи</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">
+                    {(call as any).client_speech_duration ? `${(call as any).client_speech_duration.toFixed(1)} сек` : '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    <BarChart3 className="h-4 w-4" />
                     <span className="text-sm">Количество слов</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">
+                    {(call as any).client_words_count ?? '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-muted-foreground" />
+                    <Activity className="h-4 w-4" />
                     <span className="text-sm">Темп речи</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">
+                    {(call as any).client_speech_rate ? `${(call as any).client_speech_rate.toFixed(1)} сл/мин` : '—'}
+                  </span>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Процент речи</span>
-                    <span className="text-sm text-muted-foreground">—</span>
+                    <span className="text-sm font-medium">
+                      {(call as any).percentage_speech_client ? `${((call as any).percentage_speech_client * 100).toFixed(1)}%` : '—'}
+                    </span>
                   </div>
-                  <Progress value={0} className="h-2 opacity-50" />
+                  {(call as any).percentage_speech_client && (
+                    <Progress value={(call as any).percentage_speech_client * 100} className="h-2" />
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
               </CardContent>
             </Card>
           </div>
@@ -831,7 +858,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
         <AccordionContent className="px-4 pb-4">
           <div className="space-y-4">
             {/* Эмоции оператора */}
-            <Card className="opacity-60">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <User className="h-4 w-4" />
@@ -841,27 +868,44 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-3 gap-2">
                   <div className="text-center p-2 bg-muted/30 rounded">
-                    <Smile className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                    <Smile className="h-5 w-5 mx-auto mb-1 text-success" />
                     <p className="text-xs font-medium">Позитивные</p>
-                    <p className="text-sm text-muted-foreground">—</p>
+                    <p className="text-sm font-bold">
+                      {(call as any).operator_emotion_positive ? `${((call as any).operator_emotion_positive * 100).toFixed(1)}%` : '—'}
+                    </p>
                   </div>
                   <div className="text-center p-2 bg-muted/30 rounded">
                     <Meh className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
                     <p className="text-xs font-medium">Нейтральные</p>
-                    <p className="text-sm text-muted-foreground">—</p>
+                    <p className="text-sm font-bold">
+                      {(call as any).operator_emotion_neutral ? `${((call as any).operator_emotion_neutral * 100).toFixed(1)}%` : '—'}
+                    </p>
                   </div>
                   <div className="text-center p-2 bg-muted/30 rounded">
-                    <Frown className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                    <Frown className="h-5 w-5 mx-auto mb-1 text-destructive" />
                     <p className="text-xs font-medium">Негативные</p>
-                    <p className="text-sm text-muted-foreground">—</p>
+                    <p className="text-sm font-bold">
+                      {(call as any).operator_emotion_negative ? `${((call as any).operator_emotion_negative * 100).toFixed(1)}%` : '—'}
+                    </p>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground italic">Нет данных</p>
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span className="text-xs text-muted-foreground">% негатива по времени</span>
+                  <span className="text-sm font-medium">
+                    {(call as any).agent_emotion_neg_speech_time_percentage ? `${((call as any).agent_emotion_neg_speech_time_percentage * 100).toFixed(1)}%` : '—'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">% нейтрала по времени</span>
+                  <span className="text-sm font-medium">
+                    {(call as any).agent_emotion_neu_speech_time_percentage ? `${((call as any).agent_emotion_neu_speech_time_percentage * 100).toFixed(1)}%` : '—'}
+                  </span>
+                </div>
               </CardContent>
             </Card>
 
             {/* Эмоции клиента */}
-            <Card className="opacity-60">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Phone className="h-4 w-4" />
@@ -871,27 +915,44 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-3 gap-2">
                   <div className="text-center p-2 bg-muted/30 rounded">
-                    <Smile className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                    <Smile className="h-5 w-5 mx-auto mb-1 text-success" />
                     <p className="text-xs font-medium">Позитивные</p>
-                    <p className="text-sm text-muted-foreground">—</p>
+                    <p className="text-sm font-bold">
+                      {(call as any).client_emotion_positive ? `${((call as any).client_emotion_positive * 100).toFixed(1)}%` : '—'}
+                    </p>
                   </div>
                   <div className="text-center p-2 bg-muted/30 rounded">
                     <Meh className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
                     <p className="text-xs font-medium">Нейтральные</p>
-                    <p className="text-sm text-muted-foreground">—</p>
+                    <p className="text-sm font-bold">
+                      {(call as any).client_emotion_neutral ? `${((call as any).client_emotion_neutral * 100).toFixed(1)}%` : '—'}
+                    </p>
                   </div>
                   <div className="text-center p-2 bg-muted/30 rounded">
-                    <Frown className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                    <Frown className="h-5 w-5 mx-auto mb-1 text-destructive" />
                     <p className="text-xs font-medium">Негативные</p>
-                    <p className="text-sm text-muted-foreground">—</p>
+                    <p className="text-sm font-bold">
+                      {(call as any).client_emotion_negative ? `${((call as any).client_emotion_negative * 100).toFixed(1)}%` : '—'}
+                    </p>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground italic">Нет данных</p>
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span className="text-xs text-muted-foreground">% негатива по времени</span>
+                  <span className="text-sm font-medium">
+                    {(call as any).customer_emotion_neg_speech_time_percentage ? `${((call as any).customer_emotion_neg_speech_time_percentage * 100).toFixed(1)}%` : '—'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Средний эмоц. балл</span>
+                  <span className="text-sm font-medium">
+                    {(call as any).customer_emo_score_mean ? (call as any).customer_emo_score_mean.toFixed(2) : '—'}
+                  </span>
+                </div>
               </CardContent>
             </Card>
 
             {/* Динамика эмоций */}
-            <Card className="opacity-60">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
@@ -901,26 +962,31 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               <CardContent className="space-y-2">
                 <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Позитивная динамика</span>
+                    <TrendingUp className={`h-4 w-4 ${(call as any).positive_emotion_delta && (call as any).positive_emotion_delta > 0 ? 'text-success' : 'text-muted-foreground'}`} />
+                    <span className="text-sm">Дельта позитива</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className={`text-sm font-medium ${(call as any).positive_emotion_delta && (call as any).positive_emotion_delta > 0 ? 'text-success' : (call as any).positive_emotion_delta && (call as any).positive_emotion_delta < 0 ? 'text-destructive' : ''}`}>
+                    {(call as any).positive_emotion_delta ? `${(call as any).positive_emotion_delta > 0 ? '+' : ''}${((call as any).positive_emotion_delta * 100).toFixed(1)}%` : '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-muted-foreground rotate-180" />
-                    <span className="text-sm">Негативная динамика</span>
+                    <TrendingUp className={`h-4 w-4 rotate-180 ${(call as any).negative_emotion_delta && (call as any).negative_emotion_delta < 0 ? 'text-success' : 'text-muted-foreground'}`} />
+                    <span className="text-sm">Дельта негатива</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className={`text-sm font-medium ${(call as any).negative_emotion_delta && (call as any).negative_emotion_delta > 0 ? 'text-destructive' : (call as any).negative_emotion_delta && (call as any).negative_emotion_delta < 0 ? 'text-success' : ''}`}>
+                    {(call as any).negative_emotion_delta ? `${(call as any).negative_emotion_delta > 0 ? '+' : ''}${((call as any).negative_emotion_delta * 100).toFixed(1)}%` : '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
                   <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-muted-foreground" />
+                    <Zap className={`h-4 w-4 ${(call as any).emotion_stress_index ? ((call as any).emotion_stress_index > 0.6 ? 'text-destructive' : (call as any).emotion_stress_index > 0.3 ? 'text-warning' : 'text-success') : 'text-muted-foreground'}`} />
                     <span className="text-sm">Индекс стресса</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className={`text-sm font-medium ${(call as any).emotion_stress_index ? ((call as any).emotion_stress_index > 0.6 ? 'text-destructive' : (call as any).emotion_stress_index > 0.3 ? 'text-warning' : 'text-success') : ''}`}>
+                    {(call as any).emotion_stress_index ? (call as any).emotion_stress_index.toFixed(2) : '—'}
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
               </CardContent>
             </Card>
           </div>
@@ -937,7 +1003,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4">
           <div className="space-y-4">
-            <Card className="opacity-60">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Repeat className="h-4 w-4" />
@@ -947,24 +1013,23 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Прерывания оператора</span>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">{(call as any).interruptions_operator ?? '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Прерывания клиента</span>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">{(call as any).interruptions_client ?? '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Timer className="h-4 w-4 text-muted-foreground" />
+                    <Timer className="h-4 w-4" />
                     <span className="text-sm">Прерываний в минуту</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">{(call as any).interruptions_per_min ? (call as any).interruptions_per_min.toFixed(1) : '—'}</span>
                 </div>
-                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
               </CardContent>
             </Card>
 
-            <Card className="opacity-60">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
@@ -975,28 +1040,27 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Речь оператора</span>
-                    <span className="text-sm text-muted-foreground">—</span>
+                    <span className="text-sm font-medium">{(call as any).dialog_agent_speech_percentage ? `${((call as any).dialog_agent_speech_percentage * 100).toFixed(1)}%` : '—'}</span>
                   </div>
-                  <Progress value={0} className="h-2 opacity-50" />
+                  {(call as any).dialog_agent_speech_percentage && <Progress value={(call as any).dialog_agent_speech_percentage * 100} className="h-2" />}
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Речь клиента</span>
-                    <span className="text-sm text-muted-foreground">—</span>
+                    <span className="text-sm font-medium">{(call as any).dialog_customer_speech_percentage ? `${((call as any).dialog_customer_speech_percentage * 100).toFixed(1)}%` : '—'}</span>
                   </div>
-                  <Progress value={0} className="h-2 opacity-50" />
+                  {(call as any).dialog_customer_speech_percentage && <Progress value={(call as any).dialog_customer_speech_percentage * 100} className="h-2" />}
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <VolumeX className="h-4 w-4 text-muted-foreground" />
+                      <VolumeX className="h-4 w-4" />
                       <span className="text-sm">Молчание</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">—</span>
+                    <span className="text-sm font-medium">{(call as any).dialog_silence_length_percentage ? `${((call as any).dialog_silence_length_percentage * 100).toFixed(1)}%` : '—'}</span>
                   </div>
-                  <Progress value={0} className="h-2 opacity-50" />
+                  {(call as any).dialog_silence_length_percentage && <Progress value={(call as any).dialog_silence_length_percentage * 100} className="h-2" />}
                 </div>
-                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
               </CardContent>
             </Card>
           </div>
@@ -1014,7 +1078,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
         <AccordionContent className="px-4 pb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Оператор */}
-            <Card className="opacity-60">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <User className="h-4 w-4" />
@@ -1024,24 +1088,23 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <VolumeX className="h-4 w-4 text-muted-foreground" />
+                    <VolumeX className="h-4 w-4" />
                     <span className="text-sm">Длительность пауз</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">{(call as any).operator_silence_duration ? `${(call as any).operator_silence_duration.toFixed(1)} сек` : '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Clock className="h-4 w-4" />
                     <span className="text-sm">Среднее время ответа</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">{(call as any).average_response_time_operator ? `${(call as any).average_response_time_operator.toFixed(1)} сек` : '—'}</span>
                 </div>
-                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
               </CardContent>
             </Card>
 
             {/* Клиент */}
-            <Card className="opacity-60">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Phone className="h-4 w-4" />
@@ -1051,24 +1114,23 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <VolumeX className="h-4 w-4 text-muted-foreground" />
+                    <VolumeX className="h-4 w-4" />
                     <span className="text-sm">Длительность пауз</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">{(call as any).client_silence_duration ? `${(call as any).client_silence_duration.toFixed(1)} сек` : '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Pause className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Среднее молчание</span>
+                    <Pause className="h-4 w-4" />
+                    <span className="text-sm">Среднее молчание между репликами</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">{(call as any).silence_between_turns_avg ? `${(call as any).silence_between_turns_avg.toFixed(1)} сек` : '—'}</span>
                 </div>
-                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
               </CardContent>
             </Card>
 
             {/* Общие характеристики пауз */}
-            <Card className="opacity-60 md:col-span-2">
+            <Card className="md:col-span-2">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
@@ -1079,15 +1141,14 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Процент молчания</span>
-                    <span className="text-sm text-muted-foreground">—</span>
+                    <span className="text-sm font-medium">{(call as any).silence_ratio ? `${((call as any).silence_ratio * 100).toFixed(1)}%` : '—'}</span>
                   </div>
-                  <Progress value={0} className="h-2 opacity-50" />
+                  {(call as any).silence_ratio && <Progress value={(call as any).silence_ratio * 100} className="h-2" />}
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Соотношение речи оператор/клиент</span>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm font-medium">{(call as any).speech_ratio_operator_client ? (call as any).speech_ratio_operator_client.toFixed(2) : '—'}</span>
                 </div>
-                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
               </CardContent>
             </Card>
           </div>
