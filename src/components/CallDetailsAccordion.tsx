@@ -17,7 +17,20 @@ import {
   User,
   AlertTriangle,
   Star,
-  Calendar
+  Calendar,
+  Timer,
+  HandMetal,
+  Smile,
+  Frown,
+  Meh,
+  Volume,
+  VolumeX,
+  Mic,
+  MicOff,
+  Repeat,
+  Pause,
+  Activity,
+  Zap
 } from "lucide-react";
 import TranscriptDisplay from "./TranscriptDisplay";
 import type { Tables } from "@/integrations/supabase/types";
@@ -90,12 +103,151 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
 
   return (
     <Accordion type="multiple" className="space-y-2">
-      {/* Общая информация */}
-      <AccordionItem value="general" className="border rounded-lg">
+      {/* 1. Временные характеристики */}
+      <AccordionItem value="time-metrics" className="border rounded-lg">
+        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <div className="flex items-center gap-3 w-full">
+            <Clock className="h-5 w-5 text-primary" />
+            <span className="text-base font-medium">Временные характеристики</span>
+            <div className="ml-auto flex items-center gap-2">
+              <Timer className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">
+                {formatDuration(call.conversation_duration_total)}
+              </span>
+            </div>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-4 pb-4">
+          <div className="space-y-4">
+            {/* Общая длительность */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Общая длительность разговора
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{call.conversation_duration_minutes} мин</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatDuration(call.conversation_duration_total)}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Этапы разговора с прогресс-барами */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Длительность этапов</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Приветствие */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <HandMetal className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Приветствие</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {call.conversation_stage_greeting || '—'}
+                    </span>
+                  </div>
+                  {call.conversation_stage_greeting && (
+                    <Progress 
+                      value={(() => {
+                        const match = call.conversation_stage_greeting?.match(/(\d+)/);
+                        const seconds = match ? parseInt(match[1]) : 0;
+                        const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
+                        return (seconds / totalSeconds) * 100;
+                      })()}
+                      className="h-2"
+                    />
+                  )}
+                </div>
+
+                {/* Выяснение */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Выяснение</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {call.conversation_stage_request || '—'}
+                    </span>
+                  </div>
+                  {call.conversation_stage_request && (
+                    <Progress 
+                      value={(() => {
+                        const match = call.conversation_stage_request?.match(/(\d+)/);
+                        const seconds = match ? parseInt(match[1]) : 0;
+                        const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
+                        return (seconds / totalSeconds) * 100;
+                      })()}
+                      className="h-2"
+                    />
+                  )}
+                </div>
+
+                {/* Решение */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Решение</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {call.conversation_stage_solution || '—'}
+                    </span>
+                  </div>
+                  {call.conversation_stage_solution && (
+                    <Progress 
+                      value={(() => {
+                        const match = call.conversation_stage_solution?.match(/(\d+)/);
+                        const seconds = match ? parseInt(match[1]) : 0;
+                        const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
+                        return (seconds / totalSeconds) * 100;
+                      })()}
+                      className="h-2"
+                    />
+                  )}
+                </div>
+
+                {/* Завершение */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Завершение</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {call.conversation_stage_closing || '—'}
+                    </span>
+                  </div>
+                  {call.conversation_stage_closing && (
+                    <Progress 
+                      value={(() => {
+                        const match = call.conversation_stage_closing?.match(/(\d+)/);
+                        const seconds = match ? parseInt(match[1]) : 0;
+                        const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
+                        return (seconds / totalSeconds) * 100;
+                      })()}
+                      className="h-2"
+                    />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* 2. Критерии диалога */}
+      <AccordionItem value="criteria" className="border rounded-lg">
         <AccordionTrigger className="px-4 py-3 hover:no-underline">
           <div className="flex items-center gap-3 w-full">
             <Target className="h-5 w-5 text-primary" />
-            <span className="text-base font-medium">Общая информация</span>
+            <span className="text-base font-medium">Критерии диалога</span>
             <div className="ml-auto flex items-center gap-2">
               <span className={`text-sm font-medium ${getScoreColor(completed, total)}`}>
                 {completed}/{total}
@@ -105,153 +257,336 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-4">
+            {/* Общий прогресс */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Критерии выполнения</CardTitle>
+                <CardTitle className="text-sm">Общий прогресс выполнения критериев</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Правильное приветствие</span>
-                  {call.greeting_correct ? <CheckCircle className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Назвал имя</span>
-                  {call.operator_said_name ? <CheckCircle className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Выяснил причину</span>
-                  {call.cause_identified ? <CheckCircle className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Определил причину</span>
-                  {call.cause_clarified ? <CheckCircle className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Уточнение адреса</span>
-                  {call.address_clarified ? <CheckCircle className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Выполнено</span>
+                    <span className={`text-lg font-bold ${getScoreColor(completed, total)}`}>
+                      {completed} из {total}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={(completed / total) * 100} 
+                    className="h-3"
+                  />
                 </div>
               </CardContent>
             </Card>
 
+            {/* Сетка критериев */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Работа с клиентом</CardTitle>
+                <CardTitle className="text-sm">Детализация критериев</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Первичный звонок</span>
-                  {call.is_first_contact ? <CheckCircle className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Активное слушание</span>
-                  {call.active_listening_done ? <CheckCircle className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Полнота ответа</span>
-                  {call.answer_complete ? <CheckCircle className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Поблагодарил</span>
-                  {call.operator_thanked ? <CheckCircle className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Помощь клиенту</span>
-                  {call.client_helped ? <CheckCircle className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {/* Правильное приветствие */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Правильное приветствие</span>
+                    {call.greeting_correct ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Назвал имя */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Назвал имя</span>
+                    {call.operator_said_name ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Выяснил причину */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Выяснил причину</span>
+                    {call.cause_identified ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Уточнил причину */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Уточнил причину</span>
+                    {call.cause_clarified ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Уточнил адрес */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Уточнил адрес</span>
+                    {call.address_clarified ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Активное слушание */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Активное слушание</span>
+                    {call.active_listening_done ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Полнота ответа */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Полнота ответа</span>
+                    {call.answer_complete ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Поблагодарил */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Поблагодарил клиента</span>
+                    {call.operator_thanked ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Помог клиенту */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Помог клиенту</span>
+                    {call.client_helped ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Разрешён конфликт */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Разрешён конфликт</span>
+                    {call.conflict_resolved ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+
+                  {/* Первичный контакт */}
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">Первичный контакт</span>
+                    {call.is_first_contact ? (
+                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
 
+      {/* 3. Оценки и баллы */}
+      <AccordionItem value="scores" className="border rounded-lg">
+        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <div className="flex items-center gap-3 w-full">
+            <Award className="h-5 w-5 text-primary" />
+            <span className="text-base font-medium">Оценки и баллы</span>
+            <div className="ml-auto flex items-center gap-2">
+              <Star className="h-4 w-4 text-warning" />
+              <span className={`text-sm font-medium ${getScoreColor(call.overall_score, 10)}`}>
+                {call.overall_score || 0}/10
+              </span>
+            </div>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-4 pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Общий балл */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Соответствие регламенту</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Star className="h-4 w-4 text-warning" />
+                  Общий балл
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Оценка</span>
-                    <Badge className={`text-xs ${
-                      (call.compliance_score || 0) >= 4 ? 'bg-success/10 text-success border-success/20' :
-                      (call.compliance_score || 0) >= 3 ? 'bg-warning/10 text-warning border-warning/20' :
-                      'bg-destructive/10 text-destructive border-destructive/20'
-                    }`}>
-                      {call.compliance_score || 0}/5
-                    </Badge>
+                    <span className={`text-2xl font-bold ${getScoreColor(call.overall_score, 10)}`}>
+                      {call.overall_score || 0}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={((call.overall_score || 0) / 10) * 100} 
+                    className="h-3"
+                  />
+                  <span className="text-xs text-muted-foreground">Максимум: 10 баллов</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Баллы за этапы */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Баллы за этапы
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Оценка</span>
+                    <span className={`text-2xl font-bold ${getScoreColor(call.stages_score, 6)}`}>
+                      {call.stages_score || 0}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={((call.stages_score || 0) / 6) * 100} 
+                    className="h-3"
+                  />
+                  <span className="text-xs text-muted-foreground">Максимум: 6 баллов</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Баллы за качество */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Баллы за качество
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Оценка</span>
+                    <span className={`text-2xl font-bold ${getScoreColor(call.quality_score, 4)}`}>
+                      {call.quality_score || 0}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={((call.quality_score || 0) / 4) * 100} 
+                    className="h-3"
+                  />
+                  <span className="text-xs text-muted-foreground">Максимум: 4 балла</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Соответствие регламенту */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Соответствие регламенту
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Оценка</span>
+                    <span className={`text-2xl font-bold ${getScoreColor(call.compliance_score, 5)}`}>
+                      {call.compliance_score || 0}
+                    </span>
                   </div>
                   <Progress 
                     value={((call.compliance_score || 0) / 5) * 100} 
-                    className="h-2"
+                    className="h-3"
                   />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-
-      {/* Этапы разговора */}
-      <AccordionItem value="stages" className="border rounded-lg">
-        <AccordionTrigger className="px-4 py-3 hover:no-underline">
-          <div className="flex items-center gap-3 w-full">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            <span className="text-base font-medium">Этапы разговора</span>
-            <div className="ml-auto flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">
-                {formatDuration(call.conversation_duration_total)}
-              </span>
-            </div>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="px-4 pb-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Длительность этапов</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                  <span className="text-sm">Приветствие</span>
-                  <span className="text-sm font-medium">{call.conversation_stage_greeting || '—'}</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                  <span className="text-sm">Выяснение</span>
-                  <span className="text-sm font-medium">{call.conversation_stage_request || '—'}</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                  <span className="text-sm">Решение</span>
-                  <span className="text-sm font-medium">{call.conversation_stage_solution || '—'}</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                  <span className="text-sm">Завершение</span>
-                  <span className="text-sm font-medium">{call.conversation_stage_closing || '—'}</span>
+                  <span className="text-xs text-muted-foreground">Максимум: 5 баллов</span>
                 </div>
               </CardContent>
             </Card>
 
+            {/* Риск конфликта */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Общая информация</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Риск конфликта
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Общая длительность:</span>
-                  <span className="text-sm font-medium">{formatDuration(call.conversation_duration_total)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Дата звонка:</span>
-                  <span className="text-sm font-medium">
-                    {new Date(call.call_datetime).toLocaleString('ru-RU')}
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Оценка</span>
+                    <span className={`text-2xl font-bold ${getRiskColor(call.conflict_risk_score)}`}>
+                      {call.conflict_risk_score || 0}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={((call.conflict_risk_score || 0) / 10) * 100} 
+                    className="h-3"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {getRiskLevel(call.conflict_risk_score)} (макс: 10)
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Тип звонка:</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {call.call_type || 'Не указан'}
-                  </Badge>
+              </CardContent>
+            </Card>
+
+            {/* CSI Score (плейсхолдер) */}
+            <Card className="opacity-60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Smile className="h-4 w-4" />
+                  CSI Score
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Оценка</span>
+                    <span className="text-2xl font-bold text-muted-foreground">—</span>
+                  </div>
+                  <Progress 
+                    value={0} 
+                    className="h-3 opacity-50"
+                  />
+                  <span className="text-xs text-muted-foreground">Нет данных</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* FCR Score (плейсхолдер) */}
+            <Card className="opacity-60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  FCR Score
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Оценка</span>
+                    <span className="text-2xl font-bold text-muted-foreground">—</span>
+                  </div>
+                  <Progress 
+                    value={0} 
+                    className="h-3 opacity-50"
+                  />
+                  <span className="text-xs text-muted-foreground">Нет данных</span>
                 </div>
               </CardContent>
             </Card>
@@ -259,91 +594,12 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
         </AccordionContent>
       </AccordionItem>
 
-      {/* Качественные показатели */}
+      {/* 4. Качественные показатели */}
       <AccordionItem value="quality" className="border rounded-lg">
         <AccordionTrigger className="px-4 py-3 hover:no-underline">
           <div className="flex items-center gap-3 w-full">
             <TrendingUp className="h-5 w-5 text-primary" />
             <span className="text-base font-medium">Качественные показатели</span>
-            <div className="ml-auto flex items-center gap-2">
-              <span className={`text-sm font-medium ${getRiskColor(call.conflict_risk_score)}`}>
-                {getRiskLevel(call.conflict_risk_score)}
-              </span>
-              <AlertTriangle className={`h-4 w-4 ${getRiskColor(call.conflict_risk_score)}`} />
-            </div>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="px-4 pb-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Тональность и поведение</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <span className="text-sm font-medium">Тональность оператора:</span>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {call.operator_tonality || 'Не указана'}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium">Признаки выгорания:</span>
-                  <Badge className={`ml-2 text-xs ${
-                    call.burnout_level === 'Не выявлено' ? 'bg-success/10 text-success border-success/20' :
-                    call.burnout_level === 'Легкие признаки' ? 'bg-warning/10 text-warning border-warning/20' :
-                    call.burnout_level === 'Явные признаки' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-                    'bg-muted/10 text-muted-foreground border-muted/20'
-                  }`}>
-                    {call.burnout_level || 'Не определен'}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Конфликты и решения</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Разрешение конфликта</span>
-                  {call.conflict_resolved ? 
-                    <CheckCircle className="h-4 w-4 text-success" /> : 
-                    <XCircle className="h-4 w-4 text-destructive" />
-                  }
-                </div>
-                <div>
-                  <span className="text-sm font-medium">Уровень риска конфликта:</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Progress 
-                      value={((call.conflict_risk_score || 0) / 10) * 100} 
-                      className="flex-1 h-2"
-                    />
-                    <span className={`text-sm font-medium ${getRiskColor(call.conflict_risk_score)}`}>
-                      {call.conflict_risk_score || 0}/10
-                    </span>
-                  </div>
-                </div>
-                {call.conflict_moments && (
-                  <div>
-                    <span className="text-sm font-medium">Конфликтные моменты:</span>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {call.conflict_moments}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-
-      {/* Анализ качества */}
-      <AccordionItem value="analysis" className="border rounded-lg">
-        <AccordionTrigger className="px-4 py-3 hover:no-underline">
-          <div className="flex items-center gap-3 w-full">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            <span className="text-base font-medium">Анализ качества</span>
             <div className="ml-auto flex items-center gap-2">
               <Badge className={
                 call.call_success === 'Успешный' ? "bg-success/10 text-success border-success/20" : 
@@ -357,111 +613,493 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Итоговое заключение</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {call.final_conclusion ? (
-                <p className="text-sm leading-relaxed">{call.final_conclusion}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">
-                  Итоговое заключение не предоставлено
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            {/* Результат звонка */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Результат звонка
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Badge className={
+                  call.call_success === 'Успешный' ? "bg-success/10 text-success border-success/20 text-lg px-4 py-2" : 
+                  call.call_success === 'Средний результат' ? "bg-warning/10 text-warning border-warning/20 text-lg px-4 py-2" :
+                  call.call_success === 'Неуспешный' ? "bg-destructive/10 text-destructive border-destructive/20 text-lg px-4 py-2" :
+                  "bg-muted/10 text-muted-foreground border-muted/20 text-lg px-4 py-2"
+                }>
+                  {call.call_success || "Не указан"}
+                </Badge>
+              </CardContent>
+            </Card>
+
+            {/* Тональность и выгорание */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Smile className="h-4 w-4" />
+                    Тональность оператора
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm">{call.operator_tonality || 'Не указана'}</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    Признаки выгорания
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Badge className={
+                    call.burnout_level === 'Не выявлено' ? 'bg-success/10 text-success border-success/20' :
+                    call.burnout_level === 'Легкие признаки' ? 'bg-warning/10 text-warning border-warning/20' :
+                    call.burnout_level === 'Явные признаки' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                    'bg-muted/10 text-muted-foreground border-muted/20'
+                  }>
+                    {call.burnout_level || 'Не определен'}
+                  </Badge>
+                  {call.burnout_signs && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {typeof call.burnout_signs === 'string' 
+                        ? call.burnout_signs 
+                        : JSON.stringify(call.burnout_signs)
+                      }
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Конфликтные моменты */}
+            {call.conflict_moments && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    Конфликтные моменты
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-relaxed">{call.conflict_moments}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Итоговое заключение */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Итоговое заключение
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {call.final_conclusion ? (
+                  <p className="text-sm leading-relaxed">{call.final_conclusion}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">
+                    Итоговое заключение не предоставлено
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Тег */}
+            {call.tag && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Тег</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Badge variant="secondary">{call.tag}</Badge>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </AccordionContent>
       </AccordionItem>
 
-      {/* Балльная система */}
-      <AccordionItem value="scoring" className="border rounded-lg">
+      {/* 5. Речевые метрики */}
+      <AccordionItem value="speech-metrics" className="border rounded-lg">
         <AccordionTrigger className="px-4 py-3 hover:no-underline">
           <div className="flex items-center gap-3 w-full">
-            <Award className="h-5 w-5 text-primary" />
-            <span className="text-base font-medium">Балльная система</span>
-            <div className="ml-auto flex items-center gap-2">
-              <Star className="h-4 w-4 text-warning" />
-              <span className={`text-sm font-medium ${getScoreColor(call.overall_score, 10)}`}>
-                {call.overall_score || 0}/10 баллов
-              </span>
-            </div>
+            <Mic className="h-5 w-5 text-primary" />
+            <span className="text-base font-medium">Речевые метрики</span>
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Оператор */}
+            <Card className="opacity-60">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Баллы за этапы</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Оператор
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Текущий балл</span>
-                    <span className={`text-lg font-bold ${getScoreColor(call.stages_score, 6)}`}>
-                      {call.stages_score || 0}
-                    </span>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Длительность речи</span>
                   </div>
-                  <Progress 
-                    value={((call.stages_score || 0) / 6) * 100} 
-                    className="h-3"
-                  />
-                  <span className="text-xs text-muted-foreground">Максимум: 6 баллов</span>
+                  <span className="text-sm text-muted-foreground">—</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Количество слов</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Темп речи</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Процент речи</span>
+                    <span className="text-sm text-muted-foreground">—</span>
+                  </div>
+                  <Progress value={0} className="h-2 opacity-50" />
+                </div>
+                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
               </CardContent>
             </Card>
 
-            <Card>
+            {/* Клиент */}
+            <Card className="opacity-60">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Баллы за качество</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Клиент
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Текущий балл</span>
-                    <span className={`text-lg font-bold ${getScoreColor(call.quality_score, 4)}`}>
-                      {call.quality_score || 0}
-                    </span>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Длительность речи</span>
                   </div>
-                  <Progress 
-                    value={((call.quality_score || 0) / 4) * 100} 
-                    className="h-3"
-                  />
-                  <span className="text-xs text-muted-foreground">Максимум: 4 балла</span>
+                  <span className="text-sm text-muted-foreground">—</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Общий балл</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Итоговая оценка</span>
-                    <span className={`text-xl font-bold ${getScoreColor(call.overall_score, 10)}`}>
-                      {call.overall_score || 0}
-                    </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Количество слов</span>
                   </div>
-                  <Progress 
-                    value={((call.overall_score || 0) / 10) * 100} 
-                    className="h-3"
-                  />
-                  <span className="text-xs text-muted-foreground">Максимум: 10 баллов</span>
+                  <span className="text-sm text-muted-foreground">—</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Темп речи</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Процент речи</span>
+                    <span className="text-sm text-muted-foreground">—</span>
+                  </div>
+                  <Progress value={0} className="h-2 opacity-50" />
+                </div>
+                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
               </CardContent>
             </Card>
           </div>
         </AccordionContent>
       </AccordionItem>
 
-      {/* Транскрипция */}
+      {/* 6. Эмоции */}
+      <AccordionItem value="emotions" className="border rounded-lg">
+        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <div className="flex items-center gap-3 w-full">
+            <Smile className="h-5 w-5 text-primary" />
+            <span className="text-base font-medium">Эмоции</span>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-4 pb-4">
+          <div className="space-y-4">
+            {/* Эмоции оператора */}
+            <Card className="opacity-60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Эмоции оператора
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-center p-2 bg-muted/30 rounded">
+                    <Smile className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xs font-medium">Позитивные</p>
+                    <p className="text-sm text-muted-foreground">—</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded">
+                    <Meh className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xs font-medium">Нейтральные</p>
+                    <p className="text-sm text-muted-foreground">—</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded">
+                    <Frown className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xs font-medium">Негативные</p>
+                    <p className="text-sm text-muted-foreground">—</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground italic">Нет данных</p>
+              </CardContent>
+            </Card>
+
+            {/* Эмоции клиента */}
+            <Card className="opacity-60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Эмоции клиента
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-center p-2 bg-muted/30 rounded">
+                    <Smile className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xs font-medium">Позитивные</p>
+                    <p className="text-sm text-muted-foreground">—</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded">
+                    <Meh className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xs font-medium">Нейтральные</p>
+                    <p className="text-sm text-muted-foreground">—</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded">
+                    <Frown className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xs font-medium">Негативные</p>
+                    <p className="text-sm text-muted-foreground">—</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground italic">Нет данных</p>
+              </CardContent>
+            </Card>
+
+            {/* Динамика эмоций */}
+            <Card className="opacity-60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Динамика эмоций
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Позитивная динамика</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-muted-foreground rotate-180" />
+                    <span className="text-sm">Негативная динамика</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Индекс стресса</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
+              </CardContent>
+            </Card>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* 7. Характеристики диалога */}
+      <AccordionItem value="dialog-characteristics" className="border rounded-lg">
+        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <div className="flex items-center gap-3 w-full">
+            <Repeat className="h-5 w-5 text-primary" />
+            <span className="text-base font-medium">Характеристики диалога</span>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-4 pb-4">
+          <div className="space-y-4">
+            <Card className="opacity-60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Repeat className="h-4 w-4" />
+                  Прерывания
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Прерывания оператора</span>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Прерывания клиента</span>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Timer className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Прерываний в минуту</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
+              </CardContent>
+            </Card>
+
+            <Card className="opacity-60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Распределение речи
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Речь оператора</span>
+                    <span className="text-sm text-muted-foreground">—</span>
+                  </div>
+                  <Progress value={0} className="h-2 opacity-50" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Речь клиента</span>
+                    <span className="text-sm text-muted-foreground">—</span>
+                  </div>
+                  <Progress value={0} className="h-2 opacity-50" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <VolumeX className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">Молчание</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">—</span>
+                  </div>
+                  <Progress value={0} className="h-2 opacity-50" />
+                </div>
+                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
+              </CardContent>
+            </Card>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* 8. Паузы и молчание */}
+      <AccordionItem value="pauses" className="border rounded-lg">
+        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <div className="flex items-center gap-3 w-full">
+            <Pause className="h-5 w-5 text-primary" />
+            <span className="text-base font-medium">Паузы и молчание</span>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-4 pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Оператор */}
+            <Card className="opacity-60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Паузы оператора
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <VolumeX className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Длительность пауз</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Среднее время ответа</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
+              </CardContent>
+            </Card>
+
+            {/* Клиент */}
+            <Card className="opacity-60">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Паузы клиента
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <VolumeX className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Длительность пауз</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Pause className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Среднее молчание</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
+              </CardContent>
+            </Card>
+
+            {/* Общие характеристики пауз */}
+            <Card className="opacity-60 md:col-span-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Общие характеристики
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Процент молчания</span>
+                    <span className="text-sm text-muted-foreground">—</span>
+                  </div>
+                  <Progress value={0} className="h-2 opacity-50" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Соотношение речи оператор/клиент</span>
+                  <span className="text-sm text-muted-foreground">—</span>
+                </div>
+                <p className="text-xs text-muted-foreground italic mt-2">Нет данных</p>
+              </CardContent>
+            </Card>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* 9. Стенограмма */}
       <AccordionItem value="transcript" className="border rounded-lg">
         <AccordionTrigger className="px-4 py-3 hover:no-underline">
           <div className="flex items-center gap-3 w-full">
             <FileText className="h-5 w-5 text-primary" />
-            <span className="text-base font-medium">Транскрипция</span>
+            <span className="text-base font-medium">Стенограмма</span>
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4">
@@ -477,7 +1115,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                 />
               ) : (
                 <p className="text-muted-foreground text-center py-8">
-                  Транскрипция недоступна
+                  Стенограмма недоступна
                 </p>
               )}
             </CardContent>
