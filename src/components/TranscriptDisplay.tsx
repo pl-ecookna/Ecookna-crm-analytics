@@ -3,9 +3,10 @@ import React from 'react';
 import { Headphones, User } from 'lucide-react';
 
 interface TranscriptLine {
-  number: string;
+  timestamp: string;
   role: 'Оператор' | 'Клиент';
   text: string;
+  speakerName?: string;
 }
 
 interface TranscriptDisplayProps {
@@ -20,29 +21,40 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript, opera
   }
 
   const parseTranscript = (text: string): TranscriptLine[] => {
-    const lines = text.split('\n').filter(line => line.trim());
+    const lines = text.split('\n');
     const parsed: TranscriptLine[] = [];
+    let currentEntry: TranscriptLine | null = null;
 
     for (const line of lines) {
-      // Match pattern: "1. Оператор: текст" or "2. Клиент: текст"
-      // Also handle cases where there might be extra spaces or variations
-      const match = line.match(/^(\d+)\.\s*(Оператор|Клиент):\s*(.*)$/);
+      // Match pattern: "[00:00] Speaker Name:" or "[MM:SS] Speaker:"
+      const match = line.match(/^\[(\d{2}:\d{2})\]\s*(.+?):\s*$/);
+      
       if (match) {
-        const text = match[3].trim();
-        if (text) { // Only add if there's actual text content
-          parsed.push({
-            number: match[1],
-            role: match[2] as 'Оператор' | 'Клиент',
-            text: text
-          });
+        // If there's a current entry being built, save it
+        if (currentEntry && currentEntry.text.trim()) {
+          parsed.push(currentEntry);
         }
-      } else if (line.trim() && !line.match(/^\d+\.\s*(Оператор|Клиент):\s*$/)) {
-        // If line doesn't match pattern but has content and is not an empty role line, 
-        // add to last entry if exists
-        if (parsed.length > 0) {
-          parsed[parsed.length - 1].text += ' ' + line.trim();
-        }
+        
+        // Start a new entry
+        const timestamp = match[1];
+        const speakerName = match[2].trim();
+        const role = speakerName.toLowerCase().includes('клиент') ? 'Клиент' : 'Оператор';
+        
+        currentEntry = {
+          timestamp,
+          role,
+          text: '',
+          speakerName
+        };
+      } else if (currentEntry && line.trim()) {
+        // Add text to current entry
+        currentEntry.text += (currentEntry.text ? '\n' : '') + line.trim();
       }
+    }
+    
+    // Don't forget the last entry
+    if (currentEntry && currentEntry.text.trim()) {
+      parsed.push(currentEntry);
     }
 
     return parsed;
@@ -69,7 +81,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript, opera
           const text = line.replace(/^[^:]*:\s*/, '').trim();
           if (text) {
             messages.push({
-              number: (messages.length + 1).toString(),
+              timestamp: (messages.length + 1).toString(),
               role,
               text
             });
@@ -79,7 +91,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript, opera
           // Alternate between operator and client for better structure
           const role = messages.length % 2 === 0 ? 'Оператор' : 'Клиент';
           messages.push({
-            number: (messages.length + 1).toString(),
+            timestamp: (messages.length + 1).toString(),
             role,
             text: line
           });
@@ -123,7 +135,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript, opera
                   }`}>
                     {line.role === 'Оператор' ? displayOperatorName : line.role}
                   </span>
-                  <span className="text-xs text-muted-foreground">#{line.number}</span>
+                  <span className="text-xs text-muted-foreground">{line.timestamp}</span>
                 </div>
                 <p className="text-sm leading-relaxed">{line.text}</p>
               </div>
@@ -167,7 +179,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript, opera
                    }`}>
                      {role === 'Оператор' ? displayOperatorName : role}
                    </span>
-                  <span className="text-xs text-muted-foreground">#{index + 1}</span>
+                  <span className="text-xs text-muted-foreground">{index + 1}</span>
                 </div>
                 <p className="text-sm leading-relaxed">{sentence.trim()}</p>
               </div>
@@ -206,9 +218,9 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript, opera
                <span className={`text-xs font-medium ${
                  line.role === 'Оператор' ? 'text-blue-700' : 'text-green-700'
                }`}>
-                 {line.role === 'Оператор' ? displayOperatorName : line.role}
+                 {line.role === 'Оператор' ? (line.speakerName || displayOperatorName) : line.role}
                </span>
-              <span className="text-xs text-muted-foreground">#{line.number}</span>
+              <span className="text-xs text-muted-foreground">{line.timestamp}</span>
             </div>
             <p className="text-sm leading-relaxed">{line.text}</p>
           </div>
