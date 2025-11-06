@@ -72,6 +72,15 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
     return mins > 0 ? `${mins} мин ${secs} сек` : `${secs} сек`;
   };
 
+  // Форматирование минут (decimal) в читаемый формат
+  const formatMinutes = (minutes: number | null): string => {
+    if (minutes === null || minutes === undefined) return '—';
+    const totalSeconds = Math.round(minutes * 60);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins} мин ${secs} сек`;
+  };
+
   // Форматирование скорости речи
   const formatSpeechSpeed = (speedPerSecond: number | null): string => {
     if (speedPerSecond === null || speedPerSecond === undefined) return '—';
@@ -184,7 +193,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{call.conversation_duration_minutes} мин</p>
+                <p className="text-2xl font-bold">{formatMinutes(call.conversation_duration_minutes)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {formatDuration(call.conversation_duration_total)}
                 </p>
