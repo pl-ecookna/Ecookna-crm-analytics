@@ -200,8 +200,8 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               </CardContent>
             </Card>
 
-            {/* Этапы разговора с прогресс-барами */}
-            <Card>
+            {/* Этапы разговора с прогресс-барами - СКРЫТО */}
+            <Card className="hidden">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Длительность этапов</CardTitle>
               </CardHeader>
@@ -865,6 +865,14 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                         {formatSeconds(getCallFeature('agent_utt_length_mean'))}
                       </span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Прерываний:</span>
+                      <span className="font-medium">
+                        {getCallFeature('dialog_interruptions_in_agent_speech_percentage') !== null
+                          ? `${((getCallFeature('dialog_interruptions_in_agent_speech_percentage') || 0) * 100).toFixed(1)}%`
+                          : '—'}
+                      </span>
+                    </div>
                   </div>
                   {/* Progress bar для доли речи */}
                   {getCallFeature('dialog_agent_speech_percentage') !== null && (
@@ -926,6 +934,14 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                         {formatSeconds(getCallFeature('customer_utt_length_mean'))}
                       </span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Прерываний:</span>
+                      <span className="font-medium">
+                        {getCallFeature('dialog_interruptions_count') !== null
+                          ? getCallFeature('dialog_interruptions_count')
+                          : '—'}
+                      </span>
+                    </div>
                   </div>
                   {/* Progress bar для доли речи */}
                   {getCallFeature('dialog_customer_speech_percentage') !== null && (
@@ -947,95 +963,57 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             </Card>
           </div>
 
-          {/* Характеристики диалога */}
-          <Card className={`mt-4 ${!getCallFeature('dialog_silence_length_percentage') ? 'opacity-60' : ''}`}>
+          {/* Баланс диалога - визуальный чарт */}
+          <Card className="mt-4">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Activity className="h-4 w-4" />
-                Характеристики диалога
+                Баланс диалога
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Доля тишины:</span>
-                    <span className={`font-medium ${getSilenceColor(getCallFeature('dialog_silence_length_percentage'))}`}>
-                      {getCallFeature('dialog_silence_length_percentage') !== null 
-                        ? `${((getCallFeature('dialog_silence_length_percentage') || 0) * 100).toFixed(1)}%`
-                        : '—'}
-                    </span>
-                  </div>
-                  {getCallFeature('dialog_silence_length_percentage') !== null && (
-                    <Progress 
-                      value={(getCallFeature('dialog_silence_length_percentage') || 0) * 100}
-                      className="h-2"
-                    />
-                  )}
-                  
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Длительность тишины:</span>
-                    <span className="font-medium">
-                      {formatSeconds(getCallFeature('dialog_silence_length_sum'))}
-                    </span>
-                  </div>
-                  
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Прерываний:</span>
-                    <span className="font-medium">
-                      {getCallFeature('dialog_interruptions_count') || '—'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Баланс диалога:</span>
-                    <span className={`font-medium ${getBalanceColor(
-                      getCallFeature('dialog_agent_speech_percentage'),
-                      getCallFeature('dialog_customer_speech_percentage')
-                    )}`}>
-                      {calculateSpeechBalance()}
-                    </span>
-                  </div>
-
-                  {/* Визуализация баланса */}
-                  {getCallFeature('dialog_agent_speech_percentage') !== null && 
-                   getCallFeature('dialog_customer_speech_percentage') !== null && (
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">Оператор</span>
-                          <span>{((getCallFeature('dialog_agent_speech_percentage') || 0) * 100).toFixed(1)}%</span>
-                        </div>
-                        <Progress 
-                          value={(getCallFeature('dialog_agent_speech_percentage') || 0) * 100}
-                          className="h-1.5"
-                        />
+              {(() => {
+                const agentPercent = (getCallFeature('dialog_agent_speech_percentage') || 0) * 100;
+                const customerPercent = (getCallFeature('dialog_customer_speech_percentage') || 0) * 100;
+                const silencePercent = (getCallFeature('dialog_silence_length_percentage') || 0) * 100;
+                const hasData = agentPercent > 0 || customerPercent > 0 || silencePercent > 0;
+                
+                return (
+                  <div className={!hasData ? 'opacity-60' : ''}>
+                    {/* Легенда с процентами */}
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-primary"></div>
+                        <span className="text-xs">Оператор: {agentPercent.toFixed(1)}%</span>
                       </div>
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">Клиент</span>
-                          <span>{((getCallFeature('dialog_customer_speech_percentage') || 0) * 100).toFixed(1)}%</span>
-                        </div>
-                        <Progress 
-                          value={(getCallFeature('dialog_customer_speech_percentage') || 0) * 100}
-                          className="h-1.5"
-                        />
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-chart-2"></div>
+                        <span className="text-xs">Клиент: {customerPercent.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-muted"></div>
+                        <span className="text-xs">Тишина: {silencePercent.toFixed(1)}%</span>
                       </div>
                     </div>
-                  )}
-
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Прерывания оператора:</span>
-                    <span className="font-medium">
-                      {getCallFeature('dialog_interruptions_in_agent_speech_percentage') !== null
-                        ? `${((getCallFeature('dialog_interruptions_in_agent_speech_percentage') || 0) * 100).toFixed(1)}%`
-                        : '—'}
-                    </span>
+                    
+                    {/* Стековый прогресс бар */}
+                    <div className="relative h-8 w-full bg-muted/30 rounded-md overflow-hidden flex">
+                      <div 
+                        className="bg-primary h-full transition-all" 
+                        style={{width: `${agentPercent}%`}}
+                      />
+                      <div 
+                        className="bg-chart-2 h-full transition-all" 
+                        style={{width: `${customerPercent}%`}}
+                      />
+                      <div 
+                        className="bg-muted h-full transition-all" 
+                        style={{width: `${silencePercent}%`}}
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </AccordionContent>
@@ -1205,101 +1183,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
         </AccordionContent>
       </AccordionItem>
 
-      {/* 7. Характеристики диалога */}
-      <AccordionItem value="dialog-characteristics" className="border rounded-lg">
-        <AccordionTrigger className="px-4 py-3 hover:no-underline">
-          <div className="flex items-center gap-3 w-full">
-            <Repeat className="h-5 w-5 text-primary" />
-            <span className="text-base font-medium">Характеристики диалога</span>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="px-4 pb-4">
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Repeat className="h-4 w-4" />
-                  Прерывания
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Прерывания оператора</span>
-                  <span className="text-sm font-medium">{(call as any).interruptions_operator ?? '—'}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Прерывания клиента</span>
-                  <span className="text-sm font-medium">{(call as any).interruptions_client ?? '—'}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Распределение речи
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Речь оператора</span>
-                    <span className="text-sm font-medium">{(call as any).dialog_agent_speech_percentage ? `${((call as any).dialog_agent_speech_percentage * 100).toFixed(1)}%` : '—'}</span>
-                  </div>
-                  {(call as any).dialog_agent_speech_percentage && <Progress value={(call as any).dialog_agent_speech_percentage * 100} className="h-2" />}
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Речь клиента</span>
-                    <span className="text-sm font-medium">{(call as any).dialog_customer_speech_percentage ? `${((call as any).dialog_customer_speech_percentage * 100).toFixed(1)}%` : '—'}</span>
-                  </div>
-                  {(call as any).dialog_customer_speech_percentage && <Progress value={(call as any).dialog_customer_speech_percentage * 100} className="h-2" />}
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <VolumeX className="h-4 w-4" />
-                      <span className="text-sm">Молчание</span>
-                    </div>
-                    <span className="text-sm font-medium">{(call as any).dialog_silence_length_percentage ? `${((call as any).dialog_silence_length_percentage * 100).toFixed(1)}%` : '—'}</span>
-                  </div>
-                  {(call as any).dialog_silence_length_percentage && <Progress value={(call as any).dialog_silence_length_percentage * 100} className="h-2" />}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-
-      {/* 8. Соотношение речи */}
-      <AccordionItem value="speech-ratio" className="border rounded-lg">
-        <AccordionTrigger className="px-4 py-3 hover:no-underline">
-          <div className="flex items-center gap-3 w-full">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            <span className="text-base font-medium">Соотношение речи</span>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="px-4 pb-4">
-          <Card className={!(call as any).speech_ratio_operator_client ? "opacity-60" : ""}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                Соотношение речи оператор/клиент
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {(call as any).speech_ratio_operator_client 
-                  ? (call as any).speech_ratio_operator_client.toFixed(2) 
-                  : 'Нет данных'}
-              </div>
-            </CardContent>
-          </Card>
-        </AccordionContent>
-      </AccordionItem>
-
-      {/* 9. Стенограмма */}
+      {/* 7. Стенограмма */}
       <AccordionItem value="transcript" className="border rounded-lg">
         <AccordionTrigger className="px-4 py-3 hover:no-underline">
           <div className="flex items-center gap-3 w-full">
