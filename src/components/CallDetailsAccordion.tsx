@@ -140,101 +140,109 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Длительность этапов</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Приветствие */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <HandMetal className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Приветствие</span>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Колонка 1: Приветствие и Выяснение */}
+                  <div className="space-y-3">
+                    {/* Приветствие */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <HandMetal className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium">Приветствие</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {call.conversation_stage_greeting || '—'}
+                        </span>
+                      </div>
+                      {call.conversation_stage_greeting && (
+                        <Progress 
+                          value={(() => {
+                            const match = call.conversation_stage_greeting?.match(/(\d+)/);
+                            const seconds = match ? parseInt(match[1]) : 0;
+                            const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
+                            return (seconds / totalSeconds) * 100;
+                          })()}
+                          className="h-2"
+                        />
+                      )}
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {call.conversation_stage_greeting || '—'}
-                    </span>
-                  </div>
-                  {call.conversation_stage_greeting && (
-                    <Progress 
-                      value={(() => {
-                        const match = call.conversation_stage_greeting?.match(/(\d+)/);
-                        const seconds = match ? parseInt(match[1]) : 0;
-                        const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
-                        return (seconds / totalSeconds) * 100;
-                      })()}
-                      className="h-2"
-                    />
-                  )}
-                </div>
 
-                {/* Выяснение */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Выяснение</span>
+                    {/* Выяснение */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium">Выяснение</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {call.conversation_stage_request || '—'}
+                        </span>
+                      </div>
+                      {call.conversation_stage_request && (
+                        <Progress 
+                          value={(() => {
+                            const match = call.conversation_stage_request?.match(/(\d+)/);
+                            const seconds = match ? parseInt(match[1]) : 0;
+                            const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
+                            return (seconds / totalSeconds) * 100;
+                          })()}
+                          className="h-2"
+                        />
+                      )}
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {call.conversation_stage_request || '—'}
-                    </span>
                   </div>
-                  {call.conversation_stage_request && (
-                    <Progress 
-                      value={(() => {
-                        const match = call.conversation_stage_request?.match(/(\d+)/);
-                        const seconds = match ? parseInt(match[1]) : 0;
-                        const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
-                        return (seconds / totalSeconds) * 100;
-                      })()}
-                      className="h-2"
-                    />
-                  )}
-                </div>
 
-                {/* Решение */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Решение</span>
+                  {/* Колонка 2: Решение и Завершение */}
+                  <div className="space-y-3">
+                    {/* Решение */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium">Решение</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {call.conversation_stage_solution || '—'}
+                        </span>
+                      </div>
+                      {call.conversation_stage_solution && (
+                        <Progress 
+                          value={(() => {
+                            const match = call.conversation_stage_solution?.match(/(\d+)/);
+                            const seconds = match ? parseInt(match[1]) : 0;
+                            const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
+                            return (seconds / totalSeconds) * 100;
+                          })()}
+                          className="h-2"
+                        />
+                      )}
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {call.conversation_stage_solution || '—'}
-                    </span>
-                  </div>
-                  {call.conversation_stage_solution && (
-                    <Progress 
-                      value={(() => {
-                        const match = call.conversation_stage_solution?.match(/(\d+)/);
-                        const seconds = match ? parseInt(match[1]) : 0;
-                        const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
-                        return (seconds / totalSeconds) * 100;
-                      })()}
-                      className="h-2"
-                    />
-                  )}
-                </div>
 
-                {/* Завершение */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Завершение</span>
+                    {/* Завершение */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium">Завершение</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {call.conversation_stage_closing || '—'}
+                        </span>
+                      </div>
+                      {call.conversation_stage_closing && (
+                        <Progress 
+                          value={(() => {
+                            const match = call.conversation_stage_closing?.match(/(\d+)/);
+                            const seconds = match ? parseInt(match[1]) : 0;
+                            const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
+                            return (seconds / totalSeconds) * 100;
+                          })()}
+                          className="h-2"
+                        />
+                      )}
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {call.conversation_stage_closing || '—'}
-                    </span>
                   </div>
-                  {call.conversation_stage_closing && (
-                    <Progress 
-                      value={(() => {
-                        const match = call.conversation_stage_closing?.match(/(\d+)/);
-                        const seconds = match ? parseInt(match[1]) : 0;
-                        const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
-                        return (seconds / totalSeconds) * 100;
-                      })()}
-                      className="h-2"
-                    />
-                  )}
                 </div>
               </CardContent>
             </Card>
