@@ -987,11 +987,11 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                         <span className="text-xs">Оператор: {agentPercent.toFixed(1)}%</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-chart-2"></div>
+                        <div className="w-3 h-3 rounded bg-blue-400"></div>
                         <span className="text-xs">Клиент: {customerPercent.toFixed(1)}%</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-muted"></div>
+                        <div className="w-3 h-3 rounded bg-yellow-400"></div>
                         <span className="text-xs">Тишина: {silencePercent.toFixed(1)}%</span>
                       </div>
                     </div>
@@ -1003,11 +1003,11 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                         style={{width: `${agentPercent}%`}}
                       />
                       <div 
-                        className="bg-chart-2 h-full transition-all" 
+                        className="bg-blue-400 h-full transition-all" 
                         style={{width: `${customerPercent}%`}}
                       />
                       <div 
-                        className="bg-muted h-full transition-all" 
+                        className="bg-yellow-400 h-full transition-all" 
                         style={{width: `${silencePercent}%`}}
                       />
                     </div>
