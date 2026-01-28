@@ -325,6 +325,9 @@ export const UserManagement = () => {
     }
 
     try {
+      // Сохраняем текущую сессию админа
+      const { data: currentSession } = await supabase.auth.getSession();
+      
       // Создание пользователя
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: createUserForm.email,
@@ -340,6 +343,14 @@ export const UserManagement = () => {
       if (authError) throw authError;
 
       if (authData.user) {
+        // Восстанавливаем сессию админа перед созданием профиля
+        if (currentSession?.session) {
+          await supabase.auth.setSession({
+            access_token: currentSession.session.access_token,
+            refresh_token: currentSession.session.refresh_token,
+          });
+        }
+
         // Создание профиля
         const { error: profileError } = await supabase
           .from('profiles' as any)
@@ -353,6 +364,7 @@ export const UserManagement = () => {
 
         if (profileError) {
           console.error('Profile creation error:', profileError);
+          throw profileError;
         }
 
         toast({
