@@ -328,7 +328,7 @@ export const UserManagement = () => {
       // Сохраняем текущую сессию админа
       const { data: currentSession } = await supabase.auth.getSession();
       
-      // Создание пользователя
+      // Создание пользователя (триггер автоматически создаст профиль)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: createUserForm.email,
         password: createUserForm.password,
@@ -343,7 +343,7 @@ export const UserManagement = () => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Восстанавливаем сессию админа перед созданием профиля
+        // Восстанавливаем сессию админа
         if (currentSession?.session) {
           await supabase.auth.setSession({
             access_token: currentSession.session.access_token,
@@ -351,19 +351,21 @@ export const UserManagement = () => {
           });
         }
 
-        // Создание профиля
+        // Небольшая задержка для завершения работы триггера
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Обновляем профиль с указанными данными (профиль уже создан триггером)
         const { error: profileError } = await supabase
           .from('profiles' as any)
-          .insert({
-            id: authData.user.id,
-            email: createUserForm.email,
+          .update({
             name: createUserForm.name,
             role: createUserForm.role,
             department_id: createUserForm.department_id === 'none' ? null : parseInt(createUserForm.department_id),
-          });
+          })
+          .eq('id', authData.user.id);
 
         if (profileError) {
-          console.error('Profile creation error:', profileError);
+          console.error('Profile update error:', profileError);
           throw profileError;
         }
 
