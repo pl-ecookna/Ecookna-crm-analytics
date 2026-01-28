@@ -59,8 +59,8 @@ serve(async (req) => {
           'Authorization': `Bearer ${openaiApiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-4o',
-          max_tokens: 2000,
+          model: 'gpt-5-2025-08-07',
+          max_completion_tokens: 2000,
           messages: [
             { role: 'system', content: systemPrompt },
             { 
@@ -82,7 +82,7 @@ serve(async (req) => {
         throw new Error('Gemini API ключ не настроен');
       }
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

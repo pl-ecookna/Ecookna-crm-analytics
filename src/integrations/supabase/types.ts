@@ -252,20 +252,27 @@ export type Database = {
         Row: {
           active_listening_done: boolean | null
           address_clarified: boolean | null
+          agent_speech_speed_words_all_call_mean: number | null
           analyzed_at: string | null
           answer_complete: boolean | null
           brand: string | null
-          burnout_level: string | null
-          burnout_signs: Json | null
+          burnout_level: number | null
+          burnout_signs: string | null
           call_datetime: string
           call_id: string
           call_success: string | null
           call_type: string | null
           cause_clarified: boolean | null
           cause_identified: boolean | null
+          client_emotion_negative: number | null
+          client_emotion_neutral: number | null
+          client_emotion_positive: number | null
           client_helped: boolean | null
           client_id: string | null
           client_phone: string | null
+          client_speech_duration: number | null
+          client_speech_rate: number | null
+          client_words_count: number | null
           compliance_score: number | null
           conflict_moments: string | null
           conflict_resolved: boolean | null
@@ -276,23 +283,50 @@ export type Database = {
           conversation_stage_greeting: string | null
           conversation_stage_request: string | null
           conversation_stage_solution: string | null
+          csi_score: number | null
+          customer_emo_score_mean: number | null
+          customer_emo_score_weighted_by_speech_length_mean: number | null
+          customer_emotion_neg_speech_time_percentage: number | null
+          customer_emotion_pos_speech_time_percentage: number | null
+          customer_emotion_pos_utt_percentage: number | null
           department: string | null
+          dialog_agent_speech_percentage: number | null
+          dialog_anybody_speech_length_percentage: number | null
+          dialog_customer_speech_length_percentage: number | null
+          dialog_customer_speech_percentage: number | null
+          dialog_interruptions_in_agent_speech_percentage: number | null
+          dialog_silence_length_percentage: number | null
+          emotion_stress_index: number | null
+          fcr_score: number | null
           file_name: string | null
           file_status: string | null
           file_url: string
           final_conclusion: string | null
           greeting_correct: boolean | null
           id: number
+          interruptions_client: number | null
+          interruptions_operator: number | null
           is_first_contact: boolean | null
+          operator_emotion_negative: number | null
+          operator_emotion_neutral: number | null
+          operator_emotion_positive: number | null
           operator_said_name: boolean | null
+          operator_speech_duration: number | null
+          operator_speech_rate: number | null
           operator_thanked: boolean | null
           operator_tonality: string | null
+          operator_words_count: number | null
           overall_score: number | null
+          percentage_speech_client: number | null
+          percentage_speech_operator: number | null
           quality_score: number | null
+          speech_ratio_operator_client: number | null
           stages_score: number | null
           tag: string | null
+          transcription_crm: Json | null
           transkription: string | null
           transkription_full_json: Json | null
+          updated_at: string | null
           uploaded_at: string | null
           user_id: string | null
           user_name: string
@@ -300,20 +334,27 @@ export type Database = {
         Insert: {
           active_listening_done?: boolean | null
           address_clarified?: boolean | null
+          agent_speech_speed_words_all_call_mean?: number | null
           analyzed_at?: string | null
           answer_complete?: boolean | null
           brand?: string | null
-          burnout_level?: string | null
-          burnout_signs?: Json | null
+          burnout_level?: number | null
+          burnout_signs?: string | null
           call_datetime: string
           call_id: string
           call_success?: string | null
           call_type?: string | null
           cause_clarified?: boolean | null
           cause_identified?: boolean | null
+          client_emotion_negative?: number | null
+          client_emotion_neutral?: number | null
+          client_emotion_positive?: number | null
           client_helped?: boolean | null
           client_id?: string | null
           client_phone?: string | null
+          client_speech_duration?: number | null
+          client_speech_rate?: number | null
+          client_words_count?: number | null
           compliance_score?: number | null
           conflict_moments?: string | null
           conflict_resolved?: boolean | null
@@ -324,23 +365,50 @@ export type Database = {
           conversation_stage_greeting?: string | null
           conversation_stage_request?: string | null
           conversation_stage_solution?: string | null
+          csi_score?: number | null
+          customer_emo_score_mean?: number | null
+          customer_emo_score_weighted_by_speech_length_mean?: number | null
+          customer_emotion_neg_speech_time_percentage?: number | null
+          customer_emotion_pos_speech_time_percentage?: number | null
+          customer_emotion_pos_utt_percentage?: number | null
           department?: string | null
+          dialog_agent_speech_percentage?: number | null
+          dialog_anybody_speech_length_percentage?: number | null
+          dialog_customer_speech_length_percentage?: number | null
+          dialog_customer_speech_percentage?: number | null
+          dialog_interruptions_in_agent_speech_percentage?: number | null
+          dialog_silence_length_percentage?: number | null
+          emotion_stress_index?: number | null
+          fcr_score?: number | null
           file_name?: string | null
           file_status?: string | null
           file_url: string
           final_conclusion?: string | null
           greeting_correct?: boolean | null
           id?: number
+          interruptions_client?: number | null
+          interruptions_operator?: number | null
           is_first_contact?: boolean | null
+          operator_emotion_negative?: number | null
+          operator_emotion_neutral?: number | null
+          operator_emotion_positive?: number | null
           operator_said_name?: boolean | null
+          operator_speech_duration?: number | null
+          operator_speech_rate?: number | null
           operator_thanked?: boolean | null
           operator_tonality?: string | null
+          operator_words_count?: number | null
           overall_score?: number | null
+          percentage_speech_client?: number | null
+          percentage_speech_operator?: number | null
           quality_score?: number | null
+          speech_ratio_operator_client?: number | null
           stages_score?: number | null
           tag?: string | null
+          transcription_crm?: Json | null
           transkription?: string | null
           transkription_full_json?: Json | null
+          updated_at?: string | null
           uploaded_at?: string | null
           user_id?: string | null
           user_name: string
@@ -348,20 +416,27 @@ export type Database = {
         Update: {
           active_listening_done?: boolean | null
           address_clarified?: boolean | null
+          agent_speech_speed_words_all_call_mean?: number | null
           analyzed_at?: string | null
           answer_complete?: boolean | null
           brand?: string | null
-          burnout_level?: string | null
-          burnout_signs?: Json | null
+          burnout_level?: number | null
+          burnout_signs?: string | null
           call_datetime?: string
           call_id?: string
           call_success?: string | null
           call_type?: string | null
           cause_clarified?: boolean | null
           cause_identified?: boolean | null
+          client_emotion_negative?: number | null
+          client_emotion_neutral?: number | null
+          client_emotion_positive?: number | null
           client_helped?: boolean | null
           client_id?: string | null
           client_phone?: string | null
+          client_speech_duration?: number | null
+          client_speech_rate?: number | null
+          client_words_count?: number | null
           compliance_score?: number | null
           conflict_moments?: string | null
           conflict_resolved?: boolean | null
@@ -372,23 +447,50 @@ export type Database = {
           conversation_stage_greeting?: string | null
           conversation_stage_request?: string | null
           conversation_stage_solution?: string | null
+          csi_score?: number | null
+          customer_emo_score_mean?: number | null
+          customer_emo_score_weighted_by_speech_length_mean?: number | null
+          customer_emotion_neg_speech_time_percentage?: number | null
+          customer_emotion_pos_speech_time_percentage?: number | null
+          customer_emotion_pos_utt_percentage?: number | null
           department?: string | null
+          dialog_agent_speech_percentage?: number | null
+          dialog_anybody_speech_length_percentage?: number | null
+          dialog_customer_speech_length_percentage?: number | null
+          dialog_customer_speech_percentage?: number | null
+          dialog_interruptions_in_agent_speech_percentage?: number | null
+          dialog_silence_length_percentage?: number | null
+          emotion_stress_index?: number | null
+          fcr_score?: number | null
           file_name?: string | null
           file_status?: string | null
           file_url?: string
           final_conclusion?: string | null
           greeting_correct?: boolean | null
           id?: number
+          interruptions_client?: number | null
+          interruptions_operator?: number | null
           is_first_contact?: boolean | null
+          operator_emotion_negative?: number | null
+          operator_emotion_neutral?: number | null
+          operator_emotion_positive?: number | null
           operator_said_name?: boolean | null
+          operator_speech_duration?: number | null
+          operator_speech_rate?: number | null
           operator_thanked?: boolean | null
           operator_tonality?: string | null
+          operator_words_count?: number | null
           overall_score?: number | null
+          percentage_speech_client?: number | null
+          percentage_speech_operator?: number | null
           quality_score?: number | null
+          speech_ratio_operator_client?: number | null
           stages_score?: number | null
           tag?: string | null
+          transcription_crm?: Json | null
           transkription?: string | null
           transkription_full_json?: Json | null
+          updated_at?: string | null
           uploaded_at?: string | null
           user_id?: string | null
           user_name?: string
