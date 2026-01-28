@@ -746,12 +746,14 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                 </CardHeader>
                 <CardContent>
                   <Badge className={
-                    call.burnout_level === 'Не выявлено' ? 'bg-success/10 text-success border-success/20' :
-                    call.burnout_level === 'Легкие признаки' ? 'bg-warning/10 text-warning border-warning/20' :
-                    call.burnout_level === 'Явные признаки' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                    call.burnout_level !== null && call.burnout_level < 0.3 ? 'bg-success/10 text-success border-success/20' :
+                    call.burnout_level !== null && call.burnout_level < 0.6 ? 'bg-warning/10 text-warning border-warning/20' :
+                    call.burnout_level !== null && call.burnout_level >= 0.6 ? 'bg-destructive/10 text-destructive border-destructive/20' :
                     'bg-muted/10 text-muted-foreground border-muted/20'
                   }>
-                    {call.burnout_level || 'Не определен'}
+                    {call.burnout_level !== null 
+                      ? (call.burnout_level < 0.3 ? 'Не выявлено' : call.burnout_level < 0.6 ? 'Легкие признаки' : 'Явные признаки')
+                      : 'Не определен'}
                   </Badge>
                   {call.burnout_signs && (
                     <p className="text-xs text-muted-foreground mt-2">
