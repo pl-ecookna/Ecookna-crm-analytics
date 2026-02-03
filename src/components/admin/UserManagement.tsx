@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Copy, Trash2, Edit } from 'lucide-react';
+import { Plus, Copy, Trash2, Edit, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -219,6 +219,30 @@ export const UserManagement = () => {
       department_id: 'none',
     });
     setGeneratedInviteLink('');
+  };
+
+  const generatePassword = () => {
+    const length = 12;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    setCreateUserForm({ ...createUserForm, password });
+    toast({
+      title: "Пароль сгенерирован",
+      description: "Новый пароль создан и заполнен в поле",
+    });
+  };
+
+  const copyPassword = () => {
+    if (createUserForm.password) {
+      navigator.clipboard.writeText(createUserForm.password);
+      toast({
+        title: "Пароль скопирован",
+        description: "Пароль скопирован в буфер обмена",
+      });
+    }
   };
 
   const handleEditUser = (user: UserProfile) => {
@@ -580,14 +604,36 @@ export const UserManagement = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="create-password">Пароль</Label>
-                    <Input
-                      id="create-password"
-                      type="password"
-                      value={createUserForm.password}
-                      onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })}
-                      required
-                      minLength={6}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="create-password"
+                        type="text"
+                        value={createUserForm.password}
+                        onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })}
+                        required
+                        minLength={6}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={generatePassword}
+                        title="Сгенерировать пароль"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={copyPassword}
+                        disabled={!createUserForm.password}
+                        title="Скопировать пароль"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="create-role">Роль</Label>
