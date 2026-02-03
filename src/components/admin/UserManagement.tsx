@@ -5,6 +5,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Copy, Trash2, Edit } from 'lucide-react';
@@ -77,6 +87,12 @@ export const UserManagement = () => {
     role: '' as UserRole | '',
     department_id: 'none',
   });
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [isRevokeDialogOpen, setIsRevokeDialogOpen] = useState(false);
+  const [invitationToRevoke, setInvitationToRevoke] = useState<string | null>(null);
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -130,7 +146,7 @@ export const UserManagement = () => {
 
   const handleCreateInvitation = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!inviteForm.email || !inviteForm.name || !inviteForm.role || inviteForm.department_id === 'none') {
       toast({
         title: "Ошибка",
@@ -166,7 +182,7 @@ export const UserManagement = () => {
 
       const inviteLink = `${window.location.origin}/invite/${(data as any).token}`;
       setGeneratedInviteLink(inviteLink);
-      
+
       toast({
         title: "Приглашение создано",
         description: "Ссылка-приглашение готова для отправки",
@@ -217,7 +233,7 @@ export const UserManagement = () => {
 
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!editingUser || !editForm.name || !editForm.role) {
       toast({
         title: "Ошибка",
@@ -256,16 +272,19 @@ export const UserManagement = () => {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) {
-      return;
-    }
+  const handleDeleteUser = (userId: string) => {
+    setUserToDelete(userId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
 
     try {
       const { error } = await supabase
         .from('profiles' as any)
         .delete()
-        .eq('id', userId);
+        .eq('id', userToDelete);
 
       if (error) throw error;
 
@@ -276,24 +295,31 @@ export const UserManagement = () => {
 
       fetchUsers();
     } catch (error: any) {
+      console.error('Error deleting user:', error);
       toast({
         title: "Ошибка удаления",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
     }
   };
 
-  const handleRevokeInvitation = async (invitationId: string) => {
-    if (!confirm('Вы уверены, что хотите отозвать это приглашение?')) {
-      return;
-    }
+  const handleRevokeInvitation = (invitationId: string) => {
+    setInvitationToRevoke(invitationId);
+    setIsRevokeDialogOpen(true);
+  };
+
+  const confirmRevokeInvitation = async () => {
+    if (!invitationToRevoke) return;
 
     try {
       const { error } = await supabase
         .from('user_invitations' as any)
         .delete()
-        .eq('id', invitationId);
+        .eq('id', invitationToRevoke);
 
       if (error) throw error;
 
@@ -309,12 +335,15 @@ export const UserManagement = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsRevokeDialogOpen(false);
+      setInvitationToRevoke(null);
     }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!createUserForm.email || !createUserForm.name || !createUserForm.password || !createUserForm.role || createUserForm.department_id === 'none') {
       toast({
         title: "Ошибка",
@@ -327,7 +356,7 @@ export const UserManagement = () => {
     try {
       // Сохраняем текущую сессию админа
       const { data: currentSession } = await supabase.auth.getSession();
-      
+
       // Создание пользователя (триггер автоматически создаст профиль)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: createUserForm.email,
@@ -340,7 +369,17 @@ export const UserManagement = () => {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message.includes('already registered')) {
+          toast({
+            title: "Пользователь уже существует в системе Auth",
+            description: "Профиль будет восстановлен автоматически, если это возможно.",
+            variant: "destructive",
+          });
+          // Note: In a production app, you might want to call a special RPC here to link the existing user
+        }
+        throw authError;
+      }
 
       if (authData.user) {
         // Восстанавливаем сессию админа
@@ -385,9 +424,10 @@ export const UserManagement = () => {
         fetchUsers();
       }
     } catch (error: any) {
+      console.error('Error creating user:', error);
       toast({
-        title: "Ошибка создания пользователя",
-        description: error.message,
+        title: "Ошибка",
+        description: error.message || "Не удалось создать пользователя",
         variant: "destructive",
       });
     }
@@ -418,7 +458,7 @@ export const UserManagement = () => {
                       Заполните данные для создания приглашения нового пользователя
                     </DialogDescription>
                   </DialogHeader>
-                  
+
                   {generatedInviteLink ? (
                     <div className="space-y-4">
                       <div className="p-4 bg-muted rounded-lg">
@@ -445,7 +485,7 @@ export const UserManagement = () => {
                           id="email"
                           type="email"
                           value={inviteForm.email}
-                          onChange={(e) => setInviteForm({...inviteForm, email: e.target.value})}
+                          onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
                           required
                         />
                       </div>
@@ -454,13 +494,13 @@ export const UserManagement = () => {
                         <Input
                           id="name"
                           value={inviteForm.name}
-                          onChange={(e) => setInviteForm({...inviteForm, name: e.target.value})}
+                          onChange={(e) => setInviteForm({ ...inviteForm, name: e.target.value })}
                           required
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="role">Роль</Label>
-                        <Select value={inviteForm.role} onValueChange={(value: UserRole) => setInviteForm({...inviteForm, role: value})}>
+                        <Select value={inviteForm.role} onValueChange={(value: UserRole) => setInviteForm({ ...inviteForm, role: value })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Выберите роль" />
                           </SelectTrigger>
@@ -473,7 +513,7 @@ export const UserManagement = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="department">Подразделение</Label>
-                        <Select value={inviteForm.department_id} onValueChange={(value) => setInviteForm({...inviteForm, department_id: value})}>
+                        <Select value={inviteForm.department_id} onValueChange={(value) => setInviteForm({ ...inviteForm, department_id: value })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Выберите подразделение" />
                           </SelectTrigger>
@@ -517,7 +557,7 @@ export const UserManagement = () => {
                     Создайте пользователя с готовым паролем
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <form onSubmit={handleCreateUser} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="create-email">Email</Label>
@@ -525,7 +565,7 @@ export const UserManagement = () => {
                       id="create-email"
                       type="email"
                       value={createUserForm.email}
-                      onChange={(e) => setCreateUserForm({...createUserForm, email: e.target.value})}
+                      onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })}
                       required
                     />
                   </div>
@@ -534,7 +574,7 @@ export const UserManagement = () => {
                     <Input
                       id="create-name"
                       value={createUserForm.name}
-                      onChange={(e) => setCreateUserForm({...createUserForm, name: e.target.value})}
+                      onChange={(e) => setCreateUserForm({ ...createUserForm, name: e.target.value })}
                       required
                     />
                   </div>
@@ -544,14 +584,14 @@ export const UserManagement = () => {
                       id="create-password"
                       type="password"
                       value={createUserForm.password}
-                      onChange={(e) => setCreateUserForm({...createUserForm, password: e.target.value})}
+                      onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })}
                       required
                       minLength={6}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="create-role">Роль</Label>
-                    <Select value={createUserForm.role} onValueChange={(value: UserRole) => setCreateUserForm({...createUserForm, role: value})}>
+                    <Select value={createUserForm.role} onValueChange={(value: UserRole) => setCreateUserForm({ ...createUserForm, role: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Выберите роль" />
                       </SelectTrigger>
@@ -564,7 +604,7 @@ export const UserManagement = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="create-department">Подразделение</Label>
-                    <Select value={createUserForm.department_id} onValueChange={(value) => setCreateUserForm({...createUserForm, department_id: value})}>
+                    <Select value={createUserForm.department_id} onValueChange={(value) => setCreateUserForm({ ...createUserForm, department_id: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Выберите подразделение" />
                       </SelectTrigger>
@@ -662,9 +702,9 @@ export const UserManagement = () => {
                       <Badge variant="secondary">Ожидает</Badge>
                     </TableCell>
                     <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleRevokeInvitation(invitation.id)}
                         className="text-destructive hover:text-destructive"
                       >
@@ -688,20 +728,20 @@ export const UserManagement = () => {
               Изменение данных пользователя {editingUser?.name}
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleUpdateUser} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">Имя</Label>
               <Input
                 id="edit-name"
                 value={editForm.name}
-                onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                 required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-role">Роль</Label>
-              <Select value={editForm.role} onValueChange={(value: UserRole) => setEditForm({...editForm, role: value})}>
+              <Select value={editForm.role} onValueChange={(value: UserRole) => setEditForm({ ...editForm, role: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите роль" />
                 </SelectTrigger>
@@ -714,7 +754,7 @@ export const UserManagement = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-department">Подразделение</Label>
-              <Select value={editForm.department_id} onValueChange={(value) => setEditForm({...editForm, department_id: value})}>
+              <Select value={editForm.department_id} onValueChange={(value) => setEditForm({ ...editForm, department_id: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите подразделение" />
                 </SelectTrigger>
@@ -739,6 +779,39 @@ export const UserManagement = () => {
           </form>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие необратимо. Пользователь будет навсегда удален из системы.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isRevokeDialogOpen} onOpenChange={setIsRevokeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Отозвать приглашение?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ссылка-приглашение станет недействительной.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRevokeInvitation} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Отозвать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

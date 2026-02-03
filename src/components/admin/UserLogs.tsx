@@ -56,7 +56,8 @@ export const UserLogs = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      let query = supabase
+      // Сначала пробуем загрузить со связью
+      const { data, error } = await supabase
         .from('user_logs' as any)
         .select(`
           *,
@@ -68,32 +69,31 @@ export const UserLogs = () => {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // Apply filters
-      if (filters.action && filters.action !== 'all') {
-        query = query.eq('action', filters.action);
-      }
-      if (filters.resource && filters.resource !== 'all') {
-        query = query.eq('resource', filters.resource);
-      }
-      if (filters.dateFrom) {
-        query = query.gte('created_at', filters.dateFrom);
-      }
-      if (filters.dateTo) {
-        query = query.lte('created_at', filters.dateTo);
-      }
+      if (error) {
+        // Если ошибка связи (PGRST200), пробуем загрузить без неё
+        if ((error as any).code === 'PGRST200') {
+          console.warn('Relationship not found, fetching logs without profiles');
+          const { data: simpleData, error: simpleError } = await supabase
+            .from('user_logs' as any)
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(100);
 
-      const { data, error } = await query;
-
-      if (error) throw error;
+          if (simpleError) throw simpleError;
+          setLogs(simpleData || []);
+          return;
+        }
+        throw error;
+      }
 
       let filteredData = (data as any) || [];
 
       // Apply text search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
-        filteredData = filteredData.filter((log: any) => 
-          log.profiles?.name.toLowerCase().includes(searchLower) ||
-          log.profiles?.email.toLowerCase().includes(searchLower) ||
+        filteredData = filteredData.filter((log: any) =>
+          log.profiles?.name?.toLowerCase().includes(searchLower) ||
+          log.profiles?.email?.toLowerCase().includes(searchLower) ||
           log.resource_id?.toLowerCase().includes(searchLower)
         );
       }
@@ -164,12 +164,12 @@ export const UserLogs = () => {
                 id="search"
                 placeholder="Имя, email, ID..."
                 value={filters.search}
-                onChange={(e) => setFilters({...filters, search: e.target.value})}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="action">Действие</Label>
-              <Select value={filters.action} onValueChange={(value) => setFilters({...filters, action: value})}>
+              <Select value={filters.action} onValueChange={(value) => setFilters({ ...filters, action: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Все действия" />
                 </SelectTrigger>
@@ -183,7 +183,7 @@ export const UserLogs = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="resource">Ресурс</Label>
-              <Select value={filters.resource} onValueChange={(value) => setFilters({...filters, resource: value})}>
+              <Select value={filters.resource} onValueChange={(value) => setFilters({ ...filters, resource: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Все ресурсы" />
                 </SelectTrigger>
@@ -201,7 +201,7 @@ export const UserLogs = () => {
                 id="dateFrom"
                 type="date"
                 value={filters.dateFrom}
-                onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -210,7 +210,7 @@ export const UserLogs = () => {
                 id="dateTo"
                 type="date"
                 value={filters.dateTo}
-                onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
+                onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
               />
             </div>
             <div className="space-y-2 flex flex-col">
