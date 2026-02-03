@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Copy, Trash2, Edit, RefreshCw } from 'lucide-react';
+import { Plus, Copy, Trash2, Edit, RefreshCw, Key } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -92,6 +92,10 @@ export const UserManagement = () => {
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [isRevokeDialogOpen, setIsRevokeDialogOpen] = useState(false);
   const [invitationToRevoke, setInvitationToRevoke] = useState<string | null>(null);
+
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [userToResetPassword, setUserToResetPassword] = useState<UserProfile | null>(null);
+  const [newGeneratedPassword, setNewGeneratedPassword] = useState('');
 
   const { toast } = useToast();
 
@@ -243,6 +247,62 @@ export const UserManagement = () => {
         description: "Пароль скопирован в буфер обмена",
       });
     }
+  };
+
+  const handleResetPassword = (user: UserProfile) => {
+    const length = 12;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    setNewGeneratedPassword(password);
+    setUserToResetPassword(user);
+    setIsResetPasswordDialogOpen(true);
+  };
+
+  const confirmResetPassword = async () => {
+    if (!userToResetPassword || !newGeneratedPassword) return;
+
+    try {
+      // Используем Supabase Admin API для обновления пароля
+      const { error } = await supabase.auth.admin.updateUserById(
+        userToResetPassword.id,
+        { password: newGeneratedPassword }
+      );
+
+      if (error) throw error;
+
+      toast({
+        title: "Пароль обновлен",
+        description: `Новый пароль установлен для ${userToResetPassword.name}`,
+      });
+
+      // Не закрываем диалог сразу, чтобы админ мог скопировать пароль
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: "Ошибка сброса пароля",
+        description: error.message || "Не удалось обновить пароль",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const copyNewPassword = () => {
+    if (newGeneratedPassword) {
+      navigator.clipboard.writeText(newGeneratedPassword);
+      toast({
+        title: "Пароль скопирован",
+        description: "Новый пароль скопирован в буфер обмена",
+      });
+    }
+  };
+
+  const closeResetPasswordDialog = () => {
+    setIsResetPasswordDialogOpen(false);
+    setUserToResetPassword(null);
+    setNewGeneratedPassword('');
   };
 
   const handleEditUser = (user: UserProfile) => {
@@ -701,10 +761,13 @@ export const UserManagement = () => {
                   <TableCell>{new Date(user.created_at).toLocaleDateString('ru-RU')}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)} title="Редактировать">
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)}>
+                      <Button variant="ghost" size="sm" onClick={() => handleResetPassword(user)} title="Сбросить пароль">
+                        <Key className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)} title="Удалить">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -858,6 +921,45 @@ export const UserManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={(open) => { if (!open) closeResetPasswordDialog(); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Сброс пароля</DialogTitle>
+            <DialogDescription>
+              Новый пароль для пользователя {userToResetPassword?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <Label className="text-sm font-medium">Новый пароль:</Label>
+              <div className="flex items-center space-x-2 mt-2">
+                <Input 
+                  value={newGeneratedPassword} 
+                  readOnly 
+                  className="font-mono text-sm"
+                  type="text"
+                />
+                <Button size="sm" onClick={copyNewPassword} variant="outline">
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Скопируйте этот пароль и отправьте его пользователю. После закрытия окна пароль будет недоступен.
+            </p>
+            <div className="flex space-x-2">
+              <Button onClick={confirmResetPassword} className="flex-1" disabled={!newGeneratedPassword}>
+                Установить пароль
+              </Button>
+              <Button onClick={closeResetPasswordDialog} variant="outline" className="flex-1">
+                Закрыть
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
