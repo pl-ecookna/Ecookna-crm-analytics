@@ -16,6 +16,27 @@ export default function LoginPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const getAuthErrorMessage = (message?: string) => {
+    if (!message) return "Не удалось выполнить вход. Попробуйте снова.";
+
+    const normalized = message.toLowerCase();
+
+    if (normalized.includes('invalid login credentials')) {
+      return 'Неверный email или пароль';
+    }
+
+    // Safari and some network stacks can return this for cross-site/auth transport failures.
+    if (normalized.includes('load failed') || normalized.includes('failed to fetch')) {
+      return 'Нет соединения с сервером авторизации. Проверьте интернет/VPN и попробуйте снова.';
+    }
+
+    if (normalized.includes('email not confirmed')) {
+      return 'Email не подтвержден. Обратитесь к администратору.';
+    }
+
+    return message;
+  };
+
   useEffect(() => {
     if (user) {
       navigate('/', { replace: true });
@@ -30,11 +51,10 @@ export default function LoginPage() {
       const { error } = await signIn(email, password);
 
       if (error) {
+        console.error('Login error details:', error);
         toast({
           title: "Ошибка входа",
-          description: error.message === 'Invalid login credentials' 
-            ? 'Неверный email или пароль' 
-            : error.message,
+          description: getAuthErrorMessage(error.message),
           variant: "destructive",
         });
       } else {
@@ -45,9 +65,10 @@ export default function LoginPage() {
         navigate('/', { replace: true });
       }
     } catch (error) {
+      console.error('Unexpected login exception:', error);
       toast({
         title: "Ошибка",
-        description: "Произошла неожиданная ошибка",
+        description: "Произошла неожиданная ошибка при входе",
         variant: "destructive",
       });
     } finally {
@@ -84,6 +105,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="example@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -96,6 +118,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

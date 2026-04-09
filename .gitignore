@@ -1,1 +1,11 @@
 node_modules
+dist
+.DS_Store
+**/.DS_Store
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+docs/private/
+supabase/.temp/

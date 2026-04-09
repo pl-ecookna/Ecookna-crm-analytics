@@ -455,12 +455,38 @@ export const UserManagement = () => {
 
       if (authError) {
         if (authError.message.includes('already registered')) {
-          toast({
-            title: "Пользователь уже существует в системе Auth",
-            description: "Профиль будет восстановлен автоматически, если это возможно.",
-            variant: "destructive",
+          const { data: linkedData, error: linkedError } = await supabase.functions.invoke('link-existing-auth-user', {
+            body: {
+              email: createUserForm.email,
+              name: createUserForm.name,
+              role: createUserForm.role,
+              department_id: parseInt(createUserForm.department_id),
+            },
           });
-          // Note: In a production app, you might want to call a special RPC here to link the existing user
+
+          if (linkedError) {
+            throw linkedError;
+          }
+
+          if (!(linkedData as any)?.success) {
+            throw new Error('Не удалось восстановить профиль существующего пользователя');
+          }
+
+          toast({
+            title: "Профиль восстановлен",
+            description: "Пользователь уже был в Auth, профиль успешно добавлен в систему",
+          });
+
+          setIsCreateUserDialogOpen(false);
+          setCreateUserForm({
+            email: '',
+            name: '',
+            password: '',
+            role: '',
+            department_id: 'none',
+          });
+          fetchUsers();
+          return;
         }
         throw authError;
       }
