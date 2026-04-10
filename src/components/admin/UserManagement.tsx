@@ -461,6 +461,7 @@ export const UserManagement = () => {
               name: createUserForm.name,
               role: createUserForm.role,
               department_id: parseInt(createUserForm.department_id),
+              password: createUserForm.password,
             },
           });
 
@@ -474,7 +475,7 @@ export const UserManagement = () => {
 
           toast({
             title: "Профиль восстановлен",
-            description: "Пользователь уже был в Auth, профиль успешно добавлен в систему",
+            description: "Пользователь уже был в Auth: профиль восстановлен, пароль обновлен",
           });
 
           setIsCreateUserDialogOpen(false);

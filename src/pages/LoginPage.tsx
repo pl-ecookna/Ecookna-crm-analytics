@@ -48,7 +48,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      const normalizedEmail = email.trim().toLowerCase();
+      const { error } = await signIn(normalizedEmail, password);
 
       if (error) {
         console.error('Login error details:', error);

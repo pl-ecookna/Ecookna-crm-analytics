@@ -30,7 +30,7 @@ serve(async (req) => {
       });
     }
 
-    const { email, name, role, department_id } = await req.json();
+    const { email, name, role, department_id, password } = await req.json();
 
     if (!email || !name || !role || !department_id) {
       throw new Error("email, name, role, department_id are required");
@@ -88,6 +88,17 @@ serve(async (req) => {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    if (typeof password === "string" && password.length > 0) {
+      const { error: updateAuthError } = await adminClient.auth.admin.updateUserById(
+        existingAuthUser.id,
+        { password },
+      );
+
+      if (updateAuthError) {
+        throw updateAuthError;
+      }
     }
 
     const { error: upsertError } = await adminClient.from("profiles").upsert(
