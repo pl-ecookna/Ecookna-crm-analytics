@@ -530,7 +530,7 @@ const Index = () => {
             }
           }}
         >
-          <SheetContent side="right" className="w-[92vw] max-w-[92vw] overflow-y-auto sm:max-w-[92vw]">
+          <SheetContent side="right" className="w-[50vw] max-w-[50vw] overflow-y-auto sm:max-w-[50vw]">
             {crmDetailsLoading && !selectedCrmItem ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin" />
