@@ -214,8 +214,8 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               </CardContent>
             </Card>
 
-            {/* Этапы разговора с прогресс-барами - СКРЫТО */}
-            <Card className="hidden">
+            {/* Этапы разговора с прогресс-барами */}
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Длительность этапов</CardTitle>
               </CardHeader>
@@ -345,27 +345,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4">
           <div className="space-y-4">
-            {/* Общий прогресс */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Общий прогресс выполнения критериев</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Выполнено</span>
-                    <span className={`text-lg font-bold ${getScoreColor(completed, total)}`}>
-                      {completed} из {total}
-                    </span>
-                  </div>
-                  <Progress 
-                    value={(completed / total) * 100} 
-                    className="h-3"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Сетка критериев */}
             <Card>
               <CardHeader className="pb-2">
@@ -673,46 +652,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               </CardContent>
             </Card>
 
-            {/* FCR Score */}
-            <Card className={(call as any).fcr_score == null ? "opacity-60" : ""}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  FCR Score
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Оценка</span>
-                    {(call as any).fcr_score != null ? (
-                      <span className={`text-2xl font-bold ${Number((call as any).fcr_score) === 1 ? 'text-success' : 'text-destructive'}`}>
-                        {Number((call as any).fcr_score)}
-                      </span>
-                    ) : (
-                      <span className="text-2xl font-bold text-muted-foreground">—</span>
-                    )}
-                  </div>
-                  {(call as any).fcr_score != null ? (
-                    <Progress 
-                      value={Number((call as any).fcr_score) * 100} 
-                      className="h-3"
-                    />
-                  ) : (
-                    <Progress 
-                      value={0} 
-                      className="h-3 opacity-50"
-                    />
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {(call as any).fcr_score != null 
-                      ? (Number((call as any).fcr_score) === 1 ? 'Позитивная оценка' : 'Негативная оценка')
-                      : 'Нет данных'
-                    }
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </AccordionContent>
       </AccordionItem>

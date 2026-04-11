@@ -44,6 +44,19 @@ export interface CrmMetricsResponse {
   brands: string[];
 }
 
+export interface CrmDeleteResponse {
+  deleted: true;
+  id: number;
+}
+
+export interface CrmDeleteNotFoundResponse {
+  deleted: false;
+  notFound: true;
+  id: number;
+}
+
+export type CrmDeleteCallResult = CrmDeleteResponse | CrmDeleteNotFoundResponse;
+
 export interface PromptDto {
   id: number;
   prompt_key: string;

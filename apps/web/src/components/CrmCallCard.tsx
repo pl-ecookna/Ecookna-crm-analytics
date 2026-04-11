@@ -1,7 +1,10 @@
 import React from 'react';
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Phone, CheckCircle, Loader2, XCircle, Clock, Calendar, User, Building, Briefcase } from "lucide-react";
+import { Button } from "./ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
+import { Phone, CheckCircle, Loader2, MoreVertical, Trash2, XCircle, Clock, Calendar, User, Building, Briefcase } from "lucide-react";
 
 interface CrmCallCardProps {
   call: {
@@ -19,6 +22,7 @@ interface CrmCallCardProps {
     client_phone: string | null;
   };
   onClick: (id: number | string) => void;
+  onDelete: (id: number | string) => Promise<void>;
 }
 
 // Утилитарные функции
@@ -91,20 +95,114 @@ const getFileStatusIcon = (status: string) => {
   }
 };
 
-export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick }) => {
+export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick, onDelete }) => {
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  const stopAll = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const stopPropagationOnly = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Card 
-      className={`${getSuccessColor(call.call_success)} cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] border`}
+      className={`${getSuccessColor(call.call_success)} relative cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] border`}
       onClick={() => onClick(call.id)}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-4 pr-12">
+        <div className="absolute right-2 top-2 z-10">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={stopPropagationOnly}
+                onPointerDown={stopPropagationOnly}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDeleteDialogOpen(true);
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Удалить
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Удалить запись?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Это действие нельзя отменить.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                disabled={isDeleting}
+                onClick={(e) => {
+                  stopAll(e);
+                  setDeleteDialogOpen(false);
+                }}
+              >
+                Отмена
+              </AlertDialogCancel>
+              <AlertDialogAction
+                disabled={isDeleting}
+                onClick={async (e) => {
+                  stopAll(e);
+                  if (isDeleting) return;
+                  setIsDeleting(true);
+                  try {
+                    await onDelete(call.id);
+                  } finally {
+                    setIsDeleting(false);
+                    setDeleteDialogOpen(false);
+                  }
+                }}
+              >
+                {isDeleting ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Удаляем...
+                  </span>
+                ) : (
+                  "Удалить"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Верхняя часть */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center justify-between gap-2 mb-1">
               {/* Цветной индикатор статуса */}
-              <div className={`w-2 h-2 rounded-full ${getSuccessIndicatorColor(call.call_success)}`} />
-              <span className="font-mono font-semibold text-foreground">{call.call_id}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`w-2 h-2 rounded-full ${getSuccessIndicatorColor(call.call_success)}`} />
+                <span className="font-mono font-semibold text-foreground truncate">{call.call_id}</span>
+              </div>
+
+              {/* Оценка (перенесена в левую часть, чтобы не пересекаться с меню) */}
+              <div className={`text-lg font-bold ${getScoreColor(call.overall_score)} shrink-0`}>
+                {call.overall_score}/10
+              </div>
             </div>
             
             {/* Дата */}
@@ -133,16 +231,8 @@ export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick }) => {
           </div>
           
           {/* Правая верхняя часть */}
-          <div className="flex flex-col items-end gap-1 ml-3">
-            {/* Балл */}
-            <div className={`text-lg font-bold ${getScoreColor(call.overall_score)}`}>
-              {call.overall_score}/10
-            </div>
-            
-            {/* Статус обработки */}
-            <div className="flex items-center">
-              {getFileStatusIcon(call.file_status)}
-            </div>
+          <div className="flex items-center ml-3 mt-1">
+            {getFileStatusIcon(call.file_status)}
           </div>
         </div>
         

@@ -148,6 +148,39 @@ const Index = () => {
     }
   };
 
+  const handleDeleteCall = async (id: number | string) => {
+    try {
+      const result = await api.deleteCallById(id);
+
+      if ("notFound" in result && result.notFound) {
+        toast({
+          title: "Запись уже удалена",
+        });
+      } else {
+        toast({
+          title: "Удалено",
+        });
+      }
+
+      if (selectedCrmItem?.id === id) {
+        setCrmDetailsOpen(false);
+        setSelectedCrmItem(null);
+        setCrmDetailsLoading(false);
+      }
+
+      await fetchCrmCount();
+      await fetchCrmMetrics();
+      await fetchCrmAnalyses(crmCurrentPage);
+    } catch (error) {
+      console.error('Error deleting call:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить звонок",
+        variant: "destructive"
+      });
+    }
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Дата не указана";
     const date = new Date(dateString);
@@ -171,6 +204,28 @@ const Index = () => {
     const lower = tonality.toLowerCase();
     if (lower.includes('положительн') || lower.includes('дружелюбн') || lower.includes('профессиональн')) return "bg-success/10 text-success border-success/20";
     if (lower.includes('раздражен') || lower.includes('агрессивн') || lower.includes('негативн')) return "bg-destructive/10 text-destructive border-destructive/20";
+    return "bg-muted/10 text-muted-foreground border-muted/20";
+  };
+
+  const formatFileStatus = (status: string | null) => {
+    switch (status) {
+      case 'completed':
+        return 'Завершен';
+      case 'processing':
+        return 'В обработке';
+      case 'failed':
+        return 'Ошибка';
+      case 'new':
+        return 'Новый';
+      default:
+        return status || 'Новый';
+    }
+  };
+
+  const getCallSuccessBadgeClass = (callSuccess: string | null) => {
+    if (callSuccess === 'Успешный') return "bg-success/10 text-success border-success/20";
+    if (callSuccess === 'Средний результат') return "bg-warning/10 text-warning border-warning/20";
+    if (callSuccess === 'Неуспешный') return "bg-destructive/10 text-destructive border-destructive/20";
     return "bg-muted/10 text-muted-foreground border-muted/20";
   };
 
@@ -392,14 +447,8 @@ const Index = () => {
             </Card>
 
             {/* CRM Analysis List */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Анализ звонков CRM ({crmFilteredData.length})</CardTitle>
-                <CardDescription>
-                  Показано {crmFilteredData.length} из {crmTotalCount} записей
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+          <Card>
+            <CardContent className="pt-6">
                 {crmLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin" />
@@ -436,6 +485,7 @@ const Index = () => {
                           client_phone: analysis.client_phone
                         }}
                         onClick={(id) => void loadCallDetails(id)}
+                        onDelete={(id) => handleDeleteCall(id)}
                        />
                     ))}
                   </div>
@@ -516,12 +566,16 @@ const Index = () => {
                     <Badge variant={selectedCrmItem.call_type === 'входящий' ? 'default' : 'secondary'}>
                       {selectedCrmItem.call_type || 'Не указан'}
                     </Badge>
+                    <Badge className={getCallSuccessBadgeClass(selectedCrmItem.call_success)}>
+                      {selectedCrmItem.call_success || "Не указан"}
+                    </Badge>
                     <Badge variant="outline" className={`${
                       selectedCrmItem.file_status === 'completed' ? 'border-success text-success' :
                       selectedCrmItem.file_status === 'processing' ? 'border-warning text-warning' :
+                      selectedCrmItem.file_status === 'failed' ? 'border-destructive text-destructive' :
                       'border-muted text-muted-foreground'
                     }`}>
-                      {selectedCrmItem.file_status || 'Новый'}
+                      {formatFileStatus(selectedCrmItem.file_status)}
                     </Badge>
                   </div>
 
@@ -536,21 +590,7 @@ const Index = () => {
                       <span className="font-medium">Дата звонка:</span> {formatDate(selectedCrmItem.call_datetime)}
                     </div>
                     <div className="rounded-lg border bg-muted/20 p-3">
-                      <span className="font-medium">Общая оценка:</span>
-                      <br />
-                      {selectedCrmItem.overall_score ? `${selectedCrmItem.overall_score}/10` : "Не оценено"}
-                    </div>
-                    <div className="rounded-lg border bg-muted/20 p-3 sm:col-span-2">
-                      <span className="font-medium">Результат звонка:</span>
-                      <br />
-                      <Badge className={
-                        selectedCrmItem.call_success === 'Успешный' ? "bg-success/10 text-success border-success/20" : 
-                        selectedCrmItem.call_success === 'Средний результат' ? "bg-warning/10 text-warning border-warning/20" :
-                        selectedCrmItem.call_success === 'Неуспешный' ? "bg-destructive/10 text-destructive border-destructive/20" :
-                        "bg-muted/10 text-muted-foreground border-muted/20"
-                      }>
-                        {selectedCrmItem.call_success || "Не указан"}
-                      </Badge>
+                      <span className="font-medium">Общая оценка:</span> {selectedCrmItem.overall_score ? `${selectedCrmItem.overall_score}/10` : "Не оценено"}
                     </div>
                   </div>
                 </SheetHeader>

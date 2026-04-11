@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { env } from '../config/env.js';
 
 export const s3 = new S3Client({
@@ -29,6 +29,13 @@ export const downloadFromS3 = async (key) => {
   const chunks = [];
   for await (const chunk of out.Body) chunks.push(chunk);
   return Buffer.concat(chunks);
+};
+
+export const deleteFromS3 = async (key) => {
+  await s3.send(new DeleteObjectCommand({
+    Bucket: env.s3.bucket,
+    Key: key,
+  }));
 };
 
 export const getPublicS3Url = (key) => `${env.s3.endpoint}/${env.s3.bucket}/${key}`;

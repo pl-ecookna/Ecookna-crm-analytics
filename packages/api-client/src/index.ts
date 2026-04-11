@@ -1,5 +1,6 @@
 import type {
   CallsQueryParams,
+  CrmDeleteCallResult,
   CrmCallDetails,
   CrmCallListItem,
   CrmMetricsResponse,
@@ -44,6 +45,21 @@ export const createApiClient = (baseUrl = "") => ({
   getCallById: async (id: string | number) => {
     const response = await fetch(buildApiUrl(baseUrl, `/crm/calls/${id}`));
     return (await response.json()) as CrmCallDetails;
+  },
+  deleteCallById: async (id: string | number) => {
+    const response = await fetch(buildApiUrl(baseUrl, `/crm/calls/${id}`), {
+      method: "DELETE",
+    });
+
+    if (response.status === 404) {
+      return { deleted: false, notFound: true, id: Number(id) } as CrmDeleteCallResult;
+    }
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete call (HTTP ${response.status})`);
+    }
+
+    return (await response.json()) as CrmDeleteCallResult;
   },
   deleteLatestCrmCalls: async (limit = 7) => {
     const response = await fetch(buildApiUrl(baseUrl, `/crm/calls/latest${buildQuery({ limit })}`), {

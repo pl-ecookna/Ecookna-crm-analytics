@@ -1,5 +1,8 @@
 import express from 'express';
 import { mainPool } from '../db/mainDb.js';
+import { env } from '../config/env.js';
+import { deleteFromS3 } from '../clients/s3Client.js';
+import { log } from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -121,6 +124,75 @@ router.delete('/crm/calls/latest', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete latest CRM calls', detail: error.message });
+  }
+});
+
+const extractS3Key = ({ fileName, fileUrl }) => {
+  if (fileName && String(fileName).trim()) return String(fileName).trim();
+  if (!fileUrl || !String(fileUrl).trim()) return null;
+
+  try {
+    const url = new URL(String(fileUrl));
+    const path = url.pathname.replace(/^\/+/, '');
+    if (!path) return null;
+
+    const parts = path.split('/').filter(Boolean);
+    if (parts.length === 0) return null;
+
+    // Typical format: /<bucket>/<key...>
+    if (parts[0] === env.s3.bucket && parts.length >= 2) {
+      return parts.slice(1).join('/');
+    }
+
+    // Fallback: last segment.
+    return parts[parts.length - 1];
+  } catch {
+    // If it's not a URL, fallback to last segment split.
+    const raw = String(fileUrl);
+    const parts = raw.split('/').filter(Boolean);
+    return parts.length > 0 ? parts[parts.length - 1] : null;
+  }
+};
+
+router.delete('/crm/calls/:id', async (req, res) => {
+  try {
+    const id = Number.parseInt(String(req.params.id ?? ''), 10);
+    if (!Number.isFinite(id) || id <= 0) {
+      return res.status(400).json({ error: 'Invalid id' });
+    }
+
+    const { rows: foundRows } = await mainPool.query(
+      'SELECT id, file_name, file_url FROM public.crm_analytics WHERE id = $1 LIMIT 1',
+      [id],
+    );
+
+    if (foundRows.length === 0) {
+      return res.status(404).json({ error: 'Call not found' });
+    }
+
+    const fileName = foundRows[0]?.file_name || null;
+    const fileUrl = foundRows[0]?.file_url || null;
+
+    const { rows: deletedRows } = await mainPool.query(
+      'DELETE FROM public.crm_analytics WHERE id = $1 RETURNING id',
+      [id],
+    );
+
+    if (deletedRows.length === 0) {
+      return res.status(404).json({ error: 'Call not found' });
+    }
+
+    // Best-effort cleanup in S3; never affects the API response.
+    const key = extractS3Key({ fileName, fileUrl });
+    if (key) {
+      deleteFromS3(key).catch((error) => {
+        log.warn('S3 delete failed', { id, key, error: error?.message || String(error) });
+      });
+    }
+
+    return res.json({ deleted: true, id });
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to delete CRM call', detail: error.message });
   }
 });
 
