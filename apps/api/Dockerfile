@@ -10,7 +10,6 @@ COPY apps/api/src ./apps/api/src
 COPY apps/api/sql ./apps/api/sql
 COPY apps/api/certs ./apps/api/certs
 COPY apps/api/README.md ./apps/api/README.md
-COPY apps/api/scripts ./apps/api/scripts
 COPY apps/api/tests ./apps/api/tests
 
 RUN pnpm install --frozen-lockfile=false
