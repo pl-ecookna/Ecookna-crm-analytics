@@ -1,32 +1,9 @@
-import { Phone, LogOut, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const roleLabels = {
-  admin: 'Администратор',
-  editor: 'Редактор',
-  auditor: 'Аудитор',
-  call_center: 'Колл-центр',
-  sales: 'Продажи',
-};
-
 export const Header = () => {
-  const { profile, signOut, hasRole } = useAuth();
   const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
-  };
 
   const handleAdminPanel = () => {
     navigate('/admin');
@@ -52,35 +29,12 @@ export const Header = () => {
           </div>
         </div>
 
-        {/* Right side - User menu */}
+        {/* Right side */}
         <div className="flex items-center space-x-4">
-          {profile && (
-            <div className="text-left">
-              <p className="text-sm font-medium">{profile.name}</p>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="secondary" size="sm" className="text-xs h-6 px-2">
-                    {roleLabels[profile.role]}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 z-50 bg-popover">
-                  {hasRole('admin') && (
-                    <>
-                      <DropdownMenuItem onClick={handleAdminPanel}>
-                        <Settings className="w-4 h-4 mr-2" />
-                        Админ-панель
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Выйти
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
+          <Button variant="secondary" size="sm" onClick={handleAdminPanel}>
+            <Settings className="w-4 h-4 mr-2" />
+            Админ-панель
+          </Button>
         </div>
       </div>
     </header>

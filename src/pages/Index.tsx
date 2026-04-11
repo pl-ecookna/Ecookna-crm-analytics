@@ -13,45 +13,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Search, CheckCircle, XCircle, Loader2, FileText, Target, TrendingDown, Star, Clock, ChevronDown, ChevronUp, Trash2, Edit3, Check, X, Phone, MapPin, Package, Globe, MessageSquare, BarChart3, ExternalLink } from "lucide-react";
+import { Search, CheckCircle, XCircle, Loader2, FileText, Target, TrendingDown, Star, Clock, ChevronDown, ChevronUp, Trash2, Edit3, Check, X, Phone, MapPin, Package, Globe, MessageSquare, ExternalLink } from "lucide-react";
 import { CrmCallCard } from "@/components/CrmCallCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
-import { AIAnalyticsModal } from "@/components/AIAnalyticsModal";
 import TranscriptDisplay from "@/components/TranscriptDisplay";
 import { CallDetailsAccordion } from "@/components/CallDetailsAccordion";
 import { Header } from "@/components/Header";
 
-type CallAnalysis = Tables<'call_analysis'>;
-type SalesCallAnalysis = any; // Используем any для sales_calls_analysis до обновления типов
 type CrmCallAnalysis = Tables<'crm_analytics'>;
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("crm");
-  
-  // Call Center States
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedItem, setSelectedItem] = useState<CallAnalysis | null>(null);
-  const [analyses, setAnalyses] = useState<CallAnalysis[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'success' | 'failed'>('all');
-  const [transcriptExpanded, setTranscriptExpanded] = useState(false);
-  // Pagination for Call Center
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const pageSize = 25;
-  
-  // Sales States
-  const [salesSearchTerm, setSalesSearchTerm] = useState("");
-  const [selectedSalesItem, setSelectedSalesItem] = useState<SalesCallAnalysis | null>(null);
-  const [salesAnalyses, setSalesAnalyses] = useState<SalesCallAnalysis[]>([]);
-  const [salesLoading, setSalesLoading] = useState(true);
-  const [salesActiveFilter, setSalesActiveFilter] = useState<'all' | 'hot' | 'warm' | 'cold' | 'measured'>('all');
-  // Pagination for Sales
-  const [salesCurrentPage, setSalesCurrentPage] = useState(1);
-  const [salesTotalCount, setSalesTotalCount] = useState(0);
-  const salesPageSize = 25;
   
   // CRM States
   const [selectedCrmItem, setSelectedCrmItem] = useState<CrmCallAnalysis | null>(null);
@@ -66,23 +40,6 @@ const Index = () => {
   const [crmCurrentPage, setCrmCurrentPage] = useState(1);
   const [crmTotalCount, setCrmTotalCount] = useState(0);
   const crmPageSize = 25;
-  
-  
-  // Selection and editing states for call center
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [editMode, setEditMode] = useState(false);
-  const [editedItem, setEditedItem] = useState<CallAnalysis | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [updateLoading, setUpdateLoading] = useState(false);
-  
-  // Selection and editing states for sales
-  const [salesSelectionMode, setSalesSelectionMode] = useState(false);
-  const [salesSelectedItems, setSalesSelectedItems] = useState<Set<string>>(new Set());
-  const [salesEditMode, setSalesEditMode] = useState(false);
-  const [salesEditedItem, setSalesEditedItem] = useState<SalesCallAnalysis | null>(null);
-  const [salesDeleteLoading, setSalesDeleteLoading] = useState(false);
-  const [salesUpdateLoading, setSalesUpdateLoading] = useState(false);
   
   // Selection and editing states for CRM
   const [crmSelectionMode, setCrmSelectionMode] = useState(false);
@@ -114,39 +71,7 @@ const Index = () => {
   });
   const [crmMetricsLoading, setCrmMetricsLoading] = useState(false);
   
-  // AI Analytics Modal state
-  const [aiAnalyticsOpen, setAiAnalyticsOpen] = useState(false);
-  
   const { toast } = useToast();
-
-  // Count fetching functions (for totals with high limit)
-  const fetchCallCenterCount = async () => {
-    try {
-      const { count, error } = await supabase
-        .from('call_analysis')
-        .select('*', { count: 'exact', head: true })
-        .limit(300000);
-
-      if (error) throw error;
-      setTotalCount(count || 0);
-    } catch (error) {
-      console.error('Error fetching call center count:', error);
-    }
-  };
-
-  const fetchSalesCount = async () => {
-    try {
-      const { count, error } = await supabase
-        .from('sales_calls_analysis')
-        .select('*', { count: 'exact', head: true })
-        .limit(300000);
-
-      if (error) throw error;
-      setSalesTotalCount(count || 0);
-    } catch (error) {
-      console.error('Error fetching sales count:', error);
-    }
-  };
 
   const fetchCrmCount = async () => {
     try {
@@ -205,48 +130,15 @@ const Index = () => {
   };
 
   useEffect(() => {
-    // Fetch counts and metrics first
-    fetchCallCenterCount();
-    fetchSalesCount();
     fetchCrmCount();
-    fetchCrmMetrics(); // Fetch CRM metrics independently
-    
-    // Then fetch paginated data
-    fetchAnalyses(1);
-    fetchSalesAnalyses(1);
+    fetchCrmMetrics();
     fetchCrmAnalyses(1);
   }, []);
-
-  // Handle page changes
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    fetchAnalyses(page);
-  };
-
-  const handleSalesPageChange = (page: number) => {
-    setSalesCurrentPage(page);
-    fetchSalesAnalyses(page);
-  };
 
   const handleCrmPageChange = (page: number) => {
     setCrmCurrentPage(page);
     fetchCrmAnalyses(page);
   };
-
-  // Reset pagination when search/filter changes
-  useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-      fetchAnalyses(1);
-    }
-  }, [searchTerm, activeFilter]);
-
-  useEffect(() => {
-    if (salesCurrentPage !== 1) {
-      setSalesCurrentPage(1);
-      fetchSalesAnalyses(1);
-    }
-  }, [salesSearchTerm, salesActiveFilter]);
 
   useEffect(() => {
     if (crmCurrentPage !== 1) {
@@ -254,76 +146,6 @@ const Index = () => {
       fetchCrmAnalyses(1);
     }
   }, [crmActiveFilter]);
-
-  const fetchAnalyses = async (page = 1) => {
-    try {
-      setLoading(true);
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
-
-      const { data, error } = await supabase
-        .from('call_analysis')
-        .select('*')
-        .order('date_created', { ascending: false })
-        .range(from, to);
-
-      if (error) {
-        toast({
-          title: "Ошибка",
-          description: "Не удалось загрузить анализ звонков",
-          variant: "destructive"
-        });
-        console.error('Error fetching call analysis:', error);
-        return;
-      }
-
-      setAnalyses(data || []);
-    } catch (error) {
-      console.error('Error:', error);
-      toast({
-        title: "Ошибка",
-        description: "Произошла ошибка при загрузке данных",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchSalesAnalyses = async (page = 1) => {
-    try {
-      setSalesLoading(true);
-      const from = (page - 1) * salesPageSize;
-      const to = from + salesPageSize - 1;
-
-      const { data, error } = await supabase
-        .from('sales_calls_analysis')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (error) {
-        toast({
-          title: "Ошибка",
-          description: "Не удалось загрузить анализ звонков отдела продаж",
-          variant: "destructive"
-        });
-        console.error('Error fetching sales analysis:', error);
-        return;
-      }
-
-      setSalesAnalyses(data || []);
-    } catch (error) {
-      console.error('Error:', error);
-      toast({
-        title: "Ошибка",
-        description: "Произошла ошибка при загрузке данных продаж",
-        variant: "destructive"
-      });
-    } finally {
-      setSalesLoading(false);
-    }
-  };
 
   const fetchCrmAnalyses = async (page = 1) => {
     try {
@@ -468,13 +290,6 @@ const Index = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <Button 
-              onClick={() => setAiAnalyticsOpen(true)}
-              className="bg-primary hover:bg-primary/90"
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              AI Аналитика
-            </Button>
             <Button asChild variant="secondary">
               <a 
                 href="https://bi.entechai.ru/public/dashboard/26e07d8c-2451-4608-950b-bce04dce9a58"
@@ -797,11 +612,6 @@ const Index = () => {
           </DialogContent>
         </Dialog>
 
-        {/* AI Analytics Modal */}
-        <AIAnalyticsModal 
-          open={aiAnalyticsOpen} 
-          onOpenChange={setAiAnalyticsOpen} 
-        />
       </div>
     </div>
   );
