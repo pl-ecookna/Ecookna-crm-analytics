@@ -1,9 +1,10 @@
-import { Settings } from 'lucide-react';
+import { ExternalLink, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 export const Header = () => {
   const navigate = useNavigate();
+  const rejectedLeadsUrl = 'https://bi.entechai.ru/public/dashboard/26e07d8c-2451-4608-950b-bce04dce9a58';
 
   const handleAdminPanel = () => {
     navigate('/admin');
@@ -31,6 +32,12 @@ export const Header = () => {
 
         {/* Right side */}
         <div className="flex items-center space-x-4">
+          <Button asChild variant="secondary" size="sm">
+            <a href={rejectedLeadsUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Отклоненные лиды
+            </a>
+          </Button>
           <Button variant="secondary" size="sm" onClick={handleAdminPanel}>
             <Settings className="w-4 h-4 mr-2" />
             Админ-панель

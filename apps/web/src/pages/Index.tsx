@@ -9,11 +9,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Search, CheckCircle, XCircle, Loader2, FileText, Target, TrendingDown, Star, Clock, ChevronDown, ChevronUp, Trash2, Edit3, Check, X, Phone, MapPin, Package, Globe, MessageSquare, ExternalLink } from "lucide-react";
+import { Search, CheckCircle, XCircle, Loader2, FileText, Target, TrendingDown, Star, Clock, ChevronDown, ChevronUp, Trash2, Edit3, Check, X, Phone, MapPin, Package, Globe, MessageSquare } from "lucide-react";
 import { CrmCallCard } from "@/components/CrmCallCard";
 import { useToast } from "@/hooks/use-toast";
 import { createApiClient } from "@ecookna/api-client";
@@ -26,8 +25,6 @@ const api = createApiClient(import.meta.env.VITE_API_BASE_URL || "");
 type CrmCallAnalysis = CrmCallListItem;
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("crm");
-  
   // CRM States
   const [selectedCrmItem, setSelectedCrmItem] = useState<CrmCallDetails | null>(null);
   const [crmDetailsOpen, setCrmDetailsOpen] = useState(false);
@@ -250,36 +247,8 @@ const Index = () => {
       <Header />
       
       <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Анализ звонков</h1>
-            <p className="text-muted-foreground">
-              Управление и анализ записей звонков
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <Button asChild variant="secondary">
-              <a 
-                href="https://bi.entechai.ru/public/dashboard/26e07d8c-2451-4608-950b-bce04dce9a58"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Отклоненные лиды
-              </a>
-            </Button>
-          </div>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-1">
-            <TabsTrigger value="crm">Звонки из CRM (КЦ)</TabsTrigger>
-          </TabsList>
-
-          {/* CRM Tab Content */}
-          <TabsContent value="crm" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Success Rate Card */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -357,10 +326,7 @@ const Index = () => {
 
             {/* Filters */}
             <Card>
-              <CardHeader>
-                <CardTitle>Фильтры</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Результат звонка</label>
@@ -514,10 +480,7 @@ const Index = () => {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          {/* Call Center and Sales tabs content would go here */}
-        </Tabs>
+        </div>
 
         {/* CRM Detail Modal */}
         <Sheet
