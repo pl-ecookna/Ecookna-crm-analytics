@@ -7,7 +7,7 @@ import type {
   PromptDto,
 } from "@ecookna/shared-types";
 
-const buildQuery = (params: CallsQueryParams = {}) => {
+const buildQuery = (params: Record<string, unknown> = {}) => {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -44,6 +44,12 @@ export const createApiClient = (baseUrl = "") => ({
   getCallById: async (id: string | number) => {
     const response = await fetch(buildApiUrl(baseUrl, `/crm/calls/${id}`));
     return (await response.json()) as CrmCallDetails;
+  },
+  deleteLatestCrmCalls: async (limit = 7) => {
+    const response = await fetch(buildApiUrl(baseUrl, `/crm/calls/latest${buildQuery({ limit })}`), {
+      method: "DELETE",
+    });
+    return (await response.json()) as { deletedCount: number; deletedIds: number[] };
   },
   getMetrics: async () => {
     const response = await fetch(buildApiUrl(baseUrl, "/crm/metrics"));

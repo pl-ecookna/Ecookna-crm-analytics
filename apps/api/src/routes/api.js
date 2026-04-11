@@ -95,6 +95,35 @@ router.get('/crm/calls/:id', async (req, res) => {
   }
 });
 
+router.delete('/crm/calls/latest', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(toInt(req.query.limit, 7), 1), 100);
+
+    const { rows } = await mainPool.query(
+      `
+      WITH to_delete AS (
+        SELECT id
+        FROM public.crm_analytics
+        ORDER BY call_datetime DESC NULLS LAST, id DESC
+        LIMIT $1
+      )
+      DELETE FROM public.crm_analytics a
+      USING to_delete d
+      WHERE a.id = d.id
+      RETURNING a.id
+      `,
+      [limit],
+    );
+
+    res.json({
+      deletedCount: rows.length,
+      deletedIds: rows.map((row) => row.id),
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete latest CRM calls', detail: error.message });
+  }
+});
+
 router.get('/crm/metrics', async (_req, res) => {
   try {
     const { rows } = await mainPool.query(`
