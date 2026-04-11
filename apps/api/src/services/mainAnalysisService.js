@@ -6,10 +6,11 @@ import { claimCrmCalls, getPromptText, updateCrmById } from '../db/mainDb.js';
 import { buildTranscriptFromSber, extractSberCallFeatures } from './transcriptBuilder.js';
 import { calcBackoffMs } from '../utils/time.js';
 
-const markCompleted = async ({ row, sberJson, transcript, llm }) => {
+const markCompleted = async ({ row, sberJson, transcript, llm, openAiRaw }) => {
   const features = extractSberCallFeatures(sberJson);
 
   await updateCrmById(row.id, {
+    openai_full_json: openAiRaw || null,
     transkription_full_json: sberJson,
     transkription: transcript,
     file_status: 'completed',
@@ -97,12 +98,13 @@ export const processMainBatch = async () => {
       }
 
       const systemPrompt = await getPromptText('salute_crm');
-      const llm = await openAiJsonCompletion({
+      const llmRes = await openAiJsonCompletion({
         systemPrompt: systemPrompt || 'Верни только JSON с оценкой звонка.',
         userPrompt: `Информация о звонке:\nОператор: ${row.user_name}\nОтдел: ${row.department}\nБренд: ${row.brand}\nТип: ${row.call_type}\n\nТранскрипция:\n${transcript}`,
+        returnRaw: true,
       });
 
-      await markCompleted({ row, sberJson, transcript, llm });
+      await markCompleted({ row, sberJson, transcript, llm: llmRes.parsed, openAiRaw: llmRes.raw });
     } catch (error) {
       await markFailedOrRetry({ row, errorText: error?.message || String(error) });
     }

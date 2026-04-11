@@ -47,6 +47,7 @@ docker compose --env-file .env up -d --build
 - `sql/0004_internal_postgres_schema.sql` для основной базы
 - `sql/0003_disapprove_retry_cols.sql` для базы `disaproov_calls`
 - `sql/0005_marketing_channel.sql` для сохранения `marketing_channel`
+- `sql/0006_raw_audit_payloads.sql` для сохранения сырых payload (webhook/OpenAI/Deepgram) для ручного анализа
 
 Если переносите старые данные, используйте:
 - `scripts/migrate_crm_analytics_to_internal_postgres.mjs`

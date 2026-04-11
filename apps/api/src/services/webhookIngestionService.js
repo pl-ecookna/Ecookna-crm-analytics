@@ -50,6 +50,8 @@ export const ingestWebhookCall = async ({ file, fields }) => {
     transcription: fields.transcription || null,
     file_name: fileName,
     file_url: getPublicS3Url(fileName),
+    webhook_payload_json: fields || {},
+    webhook_payload_text: JSON.stringify(fields || {}),
   };
 
   if (payload.deal_type === 'disapprove') {
@@ -73,6 +75,8 @@ export const ingestWebhookCall = async ({ file, fields }) => {
     marketing_channel: payload.marketing_channel,
     is_first_contact: payload.tag !== 'Лид',
     transcription_crm: payload.transcription,
+    webhook_payload_json: payload.webhook_payload_json,
+    webhook_payload_text: payload.webhook_payload_text,
   });
 
   return { flow: 'main', callId, fileName };

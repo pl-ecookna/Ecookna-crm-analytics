@@ -12,11 +12,13 @@ export const upsertDisapproveCall = async (payload) => {
       call_id, call_datetime, client_id, client_phone, user_id, user_name,
       department, brand, call_type, deal_source, product_type, region,
       user_notes, marketing_channel, created_at, file_status, file_url, file_name,
+      webhook_payload_json, webhook_payload_text,
       retry_count, next_retry_at, last_error
     ) VALUES (
       $1,$2,$3,$4,$5,$6,
       $7,$8,$9,$10,$11,$12,
       $13,$14,NOW(),'new',$15,$16,
+      $17::jsonb,$18,
       0,NULL,NULL
     )
     ON CONFLICT (call_id) DO UPDATE SET
@@ -35,6 +37,8 @@ export const upsertDisapproveCall = async (payload) => {
       marketing_channel = EXCLUDED.marketing_channel,
       file_url = EXCLUDED.file_url,
       file_name = EXCLUDED.file_name,
+      webhook_payload_json = EXCLUDED.webhook_payload_json,
+      webhook_payload_text = EXCLUDED.webhook_payload_text,
       file_status = 'new',
       retry_count = 0,
       next_retry_at = NULL,
@@ -58,6 +62,8 @@ export const upsertDisapproveCall = async (payload) => {
     payload.marketing_channel || null,
     payload.file_url,
     payload.file_name,
+    JSON.stringify(payload.webhook_payload_json || {}),
+    payload.webhook_payload_text || null,
   ]);
 };
 
@@ -83,18 +89,25 @@ export const claimDisapproveCalls = async (limit) => {
   return rows;
 };
 
-export const completeDisapproveCall = async ({ id, rejectReasons }) => {
+export const completeDisapproveCall = async ({ id, rejectReasons, deepgramFullJson, openaiFullJson }) => {
   const q = `
     UPDATE public.disaproov_calls
     SET
       reject_reasons = $2::jsonb,
+      deepgram_full_json = $3::jsonb,
+      openai_full_json = $4::jsonb,
       file_status = 'completed',
       last_error = NULL,
       next_retry_at = NULL,
       processing_started_at = NULL
     WHERE id = $1;
   `;
-  await disapprovePool.query(q, [id, JSON.stringify(rejectReasons)]);
+  await disapprovePool.query(q, [
+    id,
+    JSON.stringify(rejectReasons),
+    JSON.stringify(deepgramFullJson ?? null),
+    JSON.stringify(openaiFullJson ?? null),
+  ]);
 };
 
 export const failDisapproveCall = async ({ id, currentRetryCount, errorText }) => {

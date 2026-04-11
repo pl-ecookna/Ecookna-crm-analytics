@@ -42,7 +42,8 @@
 1. выполнить `sql/0004_internal_postgres_schema.sql`
 2. выполнить `sql/0003_disapprove_retry_cols.sql`
 3. выполнить `sql/0005_marketing_channel.sql`
-4. при необходимости загрузить данные скриптами миграции
+4. выполнить `sql/0006_raw_audit_payloads.sql`
+5. при необходимости загрузить данные скриптами миграции
 
 Проект использует прямой `Postgres`.
 

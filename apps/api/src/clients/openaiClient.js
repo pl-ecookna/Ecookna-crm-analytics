@@ -5,7 +5,7 @@ const parseJsonFromText = (text) => {
   return JSON.parse(cleaned);
 };
 
-export const openAiJsonCompletion = async ({ systemPrompt, userPrompt }) => {
+export const openAiJsonCompletion = async ({ systemPrompt, userPrompt, returnRaw = false }) => {
   const res = await fetch(env.openai.url, {
     method: 'POST',
     headers: {
@@ -33,5 +33,6 @@ export const openAiJsonCompletion = async ({ systemPrompt, userPrompt }) => {
   const text = payload?.choices?.[0]?.message?.content;
   if (!text) throw new Error('OpenAI empty response');
 
-  return parseJsonFromText(text);
+  const parsed = parseJsonFromText(text);
+  return returnRaw ? { parsed, raw: payload } : parsed;
 };

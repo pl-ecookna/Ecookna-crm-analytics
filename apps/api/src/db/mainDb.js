@@ -53,10 +53,16 @@ const queryWithRetry = (runner) => withRetry(
   },
 );
 
+const JSONB_COLUMNS = new Set([
+  'transkription_full_json',
+  'webhook_payload_json',
+  'openai_full_json',
+]);
+
 const normalizeValue = (key, value) => {
   if (value === undefined) return null;
   if (value === null) return null;
-  if (key === 'transkription_full_json' && typeof value === 'object') return value;
+  if (JSONB_COLUMNS.has(key) && typeof value === 'object') return JSON.stringify(value);
   return value;
 };
 
@@ -67,7 +73,11 @@ const buildPatchQuery = (tableName, id, patch) => {
   const columns = entries.map(([key]) => key);
   const values = entries.map(([key, value]) => normalizeValue(key, value));
   const setClause = columns
-    .map((column, idx) => `"${column}" = $${idx + 2}`)
+    .map((column, idx) => (
+      JSONB_COLUMNS.has(column)
+        ? `"${column}" = $${idx + 2}::jsonb`
+        : `"${column}" = $${idx + 2}`
+    ))
     .join(', ');
 
   return {
@@ -91,11 +101,12 @@ export const upsertCrmCall = async (payload) => {
       call_id, call_datetime, client_id, client_phone, user_id, user_name,
       department, brand, call_type, file_name, file_url, uploaded_at,
       file_status, tag, marketing_channel, is_first_contact, transcription_crm,
+      webhook_payload_json, webhook_payload_text,
       retry_count, next_retry_at, last_error, processing_started_at
     ) VALUES (
       $1,$2,$3,$4,$5,$6,
       $7,$8,$9,$10,$11,NOW(),
-      'new',$12,$13,$14,$15,
+      'new',$12,$13,$14,$15,$16::jsonb,$17,
       0,NULL,NULL,NULL
     )
     ON CONFLICT (call_id) DO UPDATE SET
@@ -115,6 +126,8 @@ export const upsertCrmCall = async (payload) => {
       marketing_channel = EXCLUDED.marketing_channel,
       is_first_contact = EXCLUDED.is_first_contact,
       transcription_crm = EXCLUDED.transcription_crm,
+      webhook_payload_json = EXCLUDED.webhook_payload_json,
+      webhook_payload_text = EXCLUDED.webhook_payload_text,
       retry_count = 0,
       next_retry_at = NULL,
       last_error = NULL,
@@ -137,6 +150,8 @@ export const upsertCrmCall = async (payload) => {
     payload.marketing_channel || null,
     payload.is_first_contact ?? null,
     payload.transcription_crm || null,
+    JSON.stringify(payload.webhook_payload_json || {}),
+    payload.webhook_payload_text || null,
   ]));
 };
 

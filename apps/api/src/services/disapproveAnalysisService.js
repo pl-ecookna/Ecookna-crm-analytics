@@ -21,14 +21,20 @@ export const processDisapproveBatch = async () => {
       const deepgram = await deepgramTranscribe({ audioUrl: row.file_url });
       const transcript = getTranscript(deepgram);
 
-      const llm = await openAiJsonCompletion({
+      const llmRes = await openAiJsonCompletion({
         systemPrompt: prompt || 'Верни JSON вида {"reasons":["..."]}.',
         userPrompt: `Стенограмма разговора: ${transcript}\n\nПримечание оператора: ${row.user_notes || ''}`,
+        returnRaw: true,
       });
 
-      const reasons = Array.isArray(llm?.reasons) ? llm.reasons : [];
+      const reasons = Array.isArray(llmRes?.parsed?.reasons) ? llmRes.parsed.reasons : [];
       const mapped = Object.fromEntries(reasons.map((r) => [String(r), true]));
-      await completeDisapproveCall({ id: row.id, rejectReasons: mapped });
+      await completeDisapproveCall({
+        id: row.id,
+        rejectReasons: mapped,
+        deepgramFullJson: deepgram,
+        openaiFullJson: llmRes.raw,
+      });
     } catch (error) {
       await failDisapproveCall({
         id: row.id,

@@ -42,6 +42,9 @@ CREATE TABLE public.crm_analytics (
   transcription_crm text NULL,
   transkription text NULL,
   transkription_full_json jsonb NULL,
+  webhook_payload_json jsonb NULL,
+  webhook_payload_text text NULL,
+  openai_full_json jsonb NULL,
 
   -- LLM оценка (используется в UI + пишется бэкендом)
   greeting_correct boolean NULL,
@@ -76,7 +79,6 @@ CREATE TABLE public.crm_analytics (
 
   stages_score numeric NULL,
   quality_score numeric NULL,
-  fcr_score numeric NULL,
 
   -- Sber insight / эмоции (частично пишется бэкендом, используется UI)
   csi_score numeric NULL,
@@ -153,6 +155,10 @@ CREATE TABLE public.disaproov_calls (
   file_name text NULL,
 
   reject_reasons jsonb NULL,
+  webhook_payload_json jsonb NULL,
+  webhook_payload_text text NULL,
+  deepgram_full_json jsonb NULL,
+  openai_full_json jsonb NULL,
 
   retry_count integer NOT NULL DEFAULT 0,
   next_retry_at timestamptz NULL,
