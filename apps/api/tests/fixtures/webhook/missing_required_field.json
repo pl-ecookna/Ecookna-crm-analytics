@@ -1,0 +1,12 @@
+{
+  "call_datetime": "2026-04-11T12:00:00+03:00",
+  "client_id": "CLI00999",
+  "client_phone": "+79000000000",
+  "user_id": "U111",
+  "user_name": "Тест Тест",
+  "department": "Окна/Юг",
+  "brand": "Экоокна",
+  "call_type": "исходящий",
+  "deal_id": "D000111",
+  "deal_type": "approve"
+}

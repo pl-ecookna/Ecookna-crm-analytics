@@ -1,74 +1,30 @@
-# Welcome to your Lovable project
+# Ecookna Monorepo
 
-## Project info
+Текущий репозиторий переведён в структуру монорепо и теперь является точкой сборки для:
 
-**URL**: https://lovable.dev/projects/bbd0f8d7-8f37-438c-9a14-9207bc16d509
+- `apps/web` - интерфейс CRM-аналитики
+- `apps/api` - backend ingestion/API/worker сервис
 
-## How can I edit this code?
+Целевая архитектура:
 
-There are several ways of editing your application.
+`web -> api -> Postgres`
 
-**Use Lovable**
+`Supabase` больше не рассматривается как целевой runtime и будет удалён после полного API-cutover фронтенда.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/bbd0f8d7-8f37-438c-9a14-9207bc16d509) and start prompting.
+## Структура
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```text
+apps/
+  web/
+  api/
+packages/
+  shared-types/
+  api-client/
+docs/
 ```
 
-**Edit a file directly in GitHub**
+## Ближайшие шаги
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/bbd0f8d7-8f37-438c-9a14-9207bc16d509) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
-
+1. Реализовать API-контракт для фронтенда в `apps/api`
+2. Перевести `apps/web` на HTTP API
+3. Удалить все Supabase-runtime артефакты
