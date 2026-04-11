@@ -26,5 +26,5 @@ docs/
 ## Ближайшие шаги
 
 1. Реализовать API-контракт для фронтенда в `apps/api`
-2. Перевести `apps/web` с `supabase-js` на HTTP API
-3. Удалить legacy-артефакты `supabase/`
+2. Перевести `apps/web` на HTTP API
+3. Удалить все Supabase-runtime артефакты

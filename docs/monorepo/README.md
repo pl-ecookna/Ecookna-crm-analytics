@@ -7,7 +7,7 @@
 
 Целевое runtime-состояние:
 
-- `apps/web` не использует `supabase-js`
+- `apps/web` работает только через `apps/api`
 - `apps/web` ходит только в `apps/api`
 - `apps/api` работает с `Postgres`
 - фронт и бэк деплоятся рядом в Dokploy
@@ -70,10 +70,7 @@ ecookna-monorepo/
 
 После API-cutover удаляются:
 
-- `supabase/`
-- `src/integrations/supabase/`
-- `VITE_SUPABASE_*`
-- зависимость `@supabase/supabase-js`
+- любые Supabase runtime-артефакты и переменные окружения
 
 ### В `apps/api`
 

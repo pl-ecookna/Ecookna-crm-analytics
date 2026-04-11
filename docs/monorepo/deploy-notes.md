@@ -9,8 +9,9 @@
 
 ## Рекомендуемая схема маршрутизации
 
-- публичный домен фронтенда обслуживает `apps/web`
-- запросы на `/api/*` проксируются в `apps/api`
+- публичный домен фронтенда: `https://data.entechai.ru`
+- `https://data.entechai.ru/api/*` маршрутизируется в `apps/api`
+- `apps/api` не требует отдельного публичного домена, если доступ через `/api` достаточен
 
 Это даёт:
 
@@ -23,21 +24,31 @@
 ### `apps/api`
 
 - Build type: `Dockerfile`
-- Working directory: `apps/api`
+- Build path: `/`
+- Dockerfile: `apps/api/Dockerfile`
+- Docker context: `.`
 - Port: `3000`
 
 ### `apps/web`
 
-Два допустимых варианта:
+- Build type: `Dockerfile`
+- Build path: `/`
+- Dockerfile: `apps/web/Dockerfile`
+- Docker context: `.`
+- Port: `8000`
 
-1. отдельный Dockerfile для Vite static build и раздачи через nginx
-2. native/static deploy в Dokploy, если он удобнее в конкретной конфигурации
+Оба сервиса собираются из корня монорепо, потому что Dockerfile копируют общие workspace-файлы и пакеты.
 
-Рекомендуемый вариант: отдельный Dockerfile для `apps/web`, чтобы деплой был симметричным и воспроизводимым.
+## Runtime notes
+
+- проект использует только прямой `Postgres`, без Supabase runtime, auth или storage
+- источник данных для `apps/api`: прямой `Postgres`
+- если целевая Postgres-инфраструктура не поддерживает IPv6, для Dokploy нужен IPv4-доступный хост/пулер
+- если API обслуживается только через `https://data.entechai.ru/api`, отдельный внешний `api`-домен не нужен
 
 ## Что проверить после cutover
 
-1. `GET /health`
+1. `GET https://data.entechai.ru`
 2. `GET /api/crm/calls`
 3. `GET /api/crm/metrics`
 4. `GET /api/prompts`

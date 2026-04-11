@@ -1,9 +1,11 @@
 # Деплой в Dokploy
 
 ## 1) Источник
-- Репозиторий: `crm-analitics-back`
+- Репозиторий: монорепо `Ecookna-crm-analytics`
 - Build type: `Dockerfile`
-- Dockerfile path: `./Dockerfile`
+- Build path: `/`
+- Dockerfile path: `apps/api/Dockerfile`
+- Docker context: `.`
 - Port: `3000`
 
 ## 2) Переменные окружения
@@ -28,6 +30,10 @@
 
 ## 3) База данных
 
+Для `DB_MAIN_URL` используйте:
+- локально: внешний Postgres endpoint
+- в Dokploy: внутренний hostname контейнера Postgres
+
 Перед первым запуском убедиться, что:
 - в основной БД уже созданы `crm_analytics` и `prompts`
 - в базе `disaproov_calls` уже созданы служебные retry-колонки
@@ -37,10 +43,16 @@
 2. выполнить `sql/0003_disapprove_retry_cols.sql`
 3. при необходимости загрузить данные скриптами миграции
 
-Legacy-Supabase больше не участвует в runtime.
+Проект использует прямой `Postgres`.
+
+Важно:
+- если `apps/api` публикуется за фронтендом, рекомендуемый публичный путь это `https://data.entechai.ru/api`
+- в Dokploy для path-based routing не нужно дублировать `/api` во внутреннем `internalPath`
+- `DB_MAIN_URL` должен быть доступен с Dokploy-сервера по сети и TLS
 
 ## 4) Проверка после деплоя
-- `GET /health` -> `{ "ok": true }`
+- `GET https://data.entechai.ru/api/prompts`
+- `GET https://data.entechai.ru/api/crm/metrics`
 - отправить тестовый webhook через `tests/send_webhook_fixture.sh`
 
 ## 5) Наблюдаемость
