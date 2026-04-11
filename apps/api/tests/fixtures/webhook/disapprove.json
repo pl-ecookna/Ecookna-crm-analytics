@@ -1,0 +1,22 @@
+{
+  "call_id": "ZTEST-DISAPPROVE-001",
+  "call_datetime": "2026-04-11T11:20:00+03:00",
+  "client_id": "CLI00888",
+  "client_phone": "+79001112233",
+  "user_id": "U777",
+  "user_name": "Петров Петр",
+  "department": "Калева/Север",
+  "brand": "Калева",
+  "call_type": "входящий",
+  "deal_id": "D999000",
+  "deal_type": "disapprove",
+  "deal_source": "Сайт",
+  "product_type": "Остекление",
+  "region": "Санкт-Петербург",
+  "user_notes": "Клиент отказался из-за цены",
+  "disapprove_reason": "дорого",
+  "lead_status": "Закрыт",
+  "lead_ammount": "112000.00",
+  "tag": "Лид",
+  "transcription": ""
+}

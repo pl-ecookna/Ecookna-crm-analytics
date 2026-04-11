@@ -1,0 +1,22 @@
+{
+  "call_id": "ZTEST-APPROVE-001",
+  "call_datetime": "2026-04-11T10:15:00+03:00",
+  "client_id": "CLI00123",
+  "client_phone": "+79991234567",
+  "user_id": "U001",
+  "user_name": "Иванов Иван",
+  "department": "Окна/Юг",
+  "brand": "Экоокна",
+  "call_type": "исходящий",
+  "deal_id": "D123456",
+  "deal_type": "approve",
+  "deal_source": "Входящий звонок",
+  "product_type": "Окна ПВХ Стандарт",
+  "region": "Москва",
+  "user_notes": "Клиент просит перезвонить завтра",
+  "disapprove_reason": "",
+  "lead_status": "Новый",
+  "lead_ammount": "54000.50",
+  "tag": "Лид",
+  "transcription": ""
+}

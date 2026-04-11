@@ -1,0 +1,23 @@
+{
+  "name": "@ecookna/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "lint": "echo 'No linter configured'",
+    "test": "node --test",
+    "typecheck": "echo 'No typecheck configured'",
+    "clean": "rm -rf coverage"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.879.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "music-metadata": "^11.9.0",
+    "node-cron": "^4.2.1",
+    "pg": "^8.16.3"
+  }
+}
