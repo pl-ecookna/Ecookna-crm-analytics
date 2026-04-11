@@ -42,6 +42,11 @@ interface CallDetailsAccordionProps {
 }
 
 export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call }) => {
+  const toNullableNumber = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === "") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
   
   // Функция декодирования UTF-8
   const decodeUtf8 = (str: string | null): string | null => {
@@ -58,7 +63,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
     try {
       const json = (call as any).transkription_full_json;
       if (!json?.insight_result?.call_features) return null;
-      return json.insight_result.call_features[featureName] ?? null;
+      return toNullableNumber(json.insight_result.call_features[featureName]);
     } catch {
       return null;
     }
@@ -165,6 +170,15 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
   };
 
   const { completed, total } = calculateCriteriaScore();
+  const operatorEmotionPositive = toNullableNumber((call as any).operator_emotion_positive);
+  const operatorEmotionNeutral = toNullableNumber((call as any).operator_emotion_neutral);
+  const operatorEmotionNegative = toNullableNumber((call as any).operator_emotion_negative);
+  const clientEmotionPositive = toNullableNumber((call as any).client_emotion_positive);
+  const clientEmotionNeutral = toNullableNumber((call as any).client_emotion_neutral);
+  const clientEmotionNegative = toNullableNumber((call as any).client_emotion_negative);
+  const customerEmotionNegSpeechTimePercentage = toNullableNumber((call as any).customer_emotion_neg_speech_time_percentage);
+  const customerEmoScoreMean = toNullableNumber((call as any).customer_emo_score_mean);
+  const emotionStressIndex = toNullableNumber((call as any).emotion_stress_index);
 
   return (
     <Accordion type="multiple" className="space-y-2">
@@ -1032,7 +1046,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
         <AccordionContent className="px-4 pb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Эмоции оператора */}
-            <Card className={!(call as any).operator_emotion_positive ? "opacity-60" : ""}>
+            <Card className={!operatorEmotionPositive ? "opacity-60" : ""}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Mic className="h-4 w-4" />
@@ -1047,11 +1061,11 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                       Позитивные
                     </span>
                     <span className="font-medium">
-                      {(call as any).operator_emotion_positive ? `${((call as any).operator_emotion_positive * 100).toFixed(1)}%` : 'Нет данных'}
+                      {operatorEmotionPositive !== null ? `${(operatorEmotionPositive * 100).toFixed(1)}%` : 'Нет данных'}
                     </span>
                   </div>
-                  {(call as any).operator_emotion_positive && (
-                    <Progress value={(call as any).operator_emotion_positive * 100} className="h-2" />
+                  {operatorEmotionPositive !== null && (
+                    <Progress value={operatorEmotionPositive * 100} className="h-2" />
                   )}
                 </div>
                 
@@ -1062,11 +1076,11 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                       Нейтральные
                     </span>
                     <span className="font-medium">
-                      {(call as any).operator_emotion_neutral ? `${((call as any).operator_emotion_neutral * 100).toFixed(1)}%` : 'Нет данных'}
+                      {operatorEmotionNeutral !== null ? `${(operatorEmotionNeutral * 100).toFixed(1)}%` : 'Нет данных'}
                     </span>
                   </div>
-                  {(call as any).operator_emotion_neutral && (
-                    <Progress value={(call as any).operator_emotion_neutral * 100} className="h-2" />
+                  {operatorEmotionNeutral !== null && (
+                    <Progress value={operatorEmotionNeutral * 100} className="h-2" />
                   )}
                 </div>
                 
@@ -1077,18 +1091,18 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                       Негативные
                     </span>
                     <span className="font-medium">
-                      {(call as any).operator_emotion_negative ? `${((call as any).operator_emotion_negative * 100).toFixed(1)}%` : 'Нет данных'}
+                      {operatorEmotionNegative !== null ? `${(operatorEmotionNegative * 100).toFixed(1)}%` : 'Нет данных'}
                     </span>
                   </div>
-                  {(call as any).operator_emotion_negative && (
-                    <Progress value={(call as any).operator_emotion_negative * 100} className="h-2" />
+                  {operatorEmotionNegative !== null && (
+                    <Progress value={operatorEmotionNegative * 100} className="h-2" />
                   )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Эмоции клиента */}
-            <Card className={!(call as any).client_emotion_positive ? "opacity-60" : ""}>
+            <Card className={!clientEmotionPositive ? "opacity-60" : ""}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <User className="h-4 w-4" />
@@ -1103,11 +1117,11 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                       Позитивные
                     </span>
                     <span className="font-medium">
-                      {(call as any).client_emotion_positive ? `${((call as any).client_emotion_positive * 100).toFixed(1)}%` : 'Нет данных'}
+                      {clientEmotionPositive !== null ? `${(clientEmotionPositive * 100).toFixed(1)}%` : 'Нет данных'}
                     </span>
                   </div>
-                  {(call as any).client_emotion_positive && (
-                    <Progress value={(call as any).client_emotion_positive * 100} className="h-2" />
+                  {clientEmotionPositive !== null && (
+                    <Progress value={clientEmotionPositive * 100} className="h-2" />
                   )}
                 </div>
                 
@@ -1118,11 +1132,11 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                       Нейтральные
                     </span>
                     <span className="font-medium">
-                      {(call as any).client_emotion_neutral ? `${((call as any).client_emotion_neutral * 100).toFixed(1)}%` : 'Нет данных'}
+                      {clientEmotionNeutral !== null ? `${(clientEmotionNeutral * 100).toFixed(1)}%` : 'Нет данных'}
                     </span>
                   </div>
-                  {(call as any).client_emotion_neutral && (
-                    <Progress value={(call as any).client_emotion_neutral * 100} className="h-2" />
+                  {clientEmotionNeutral !== null && (
+                    <Progress value={clientEmotionNeutral * 100} className="h-2" />
                   )}
                 </div>
                 
@@ -1133,32 +1147,32 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                       Негативные
                     </span>
                     <span className="font-medium">
-                      {(call as any).client_emotion_negative ? `${((call as any).client_emotion_negative * 100).toFixed(1)}%` : 'Нет данных'}
+                      {clientEmotionNegative !== null ? `${(clientEmotionNegative * 100).toFixed(1)}%` : 'Нет данных'}
                     </span>
                   </div>
-                  {(call as any).client_emotion_negative && (
-                    <Progress value={(call as any).client_emotion_negative * 100} className="h-2" />
+                  {clientEmotionNegative !== null && (
+                    <Progress value={clientEmotionNegative * 100} className="h-2" />
                   )}
                 </div>
 
                 <div className="flex justify-between items-center pt-2 border-t">
                   <span className="text-xs text-muted-foreground">Время негативных эмоций</span>
                   <span className="font-medium">
-                    {(call as any).customer_emotion_neg_speech_time_percentage ? `${((call as any).customer_emotion_neg_speech_time_percentage * 100).toFixed(1)}%` : 'Нет данных'}
+                    {customerEmotionNegSpeechTimePercentage !== null ? `${(customerEmotionNegSpeechTimePercentage * 100).toFixed(1)}%` : 'Нет данных'}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-muted-foreground">Средний эмоц. счет</span>
                   <span className="font-medium">
-                    {(call as any).customer_emo_score_mean ? (call as any).customer_emo_score_mean.toFixed(2) : 'Нет данных'}
+                    {customerEmoScoreMean !== null ? customerEmoScoreMean.toFixed(2) : 'Нет данных'}
                   </span>
                 </div>
               </CardContent>
             </Card>
 
             {/* Индекс стресса */}
-            <Card className={!(call as any).emotion_stress_index ? "opacity-60" : ""}>
+            <Card className={!emotionStressIndex ? "opacity-60" : ""}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Activity className="h-4 w-4" />
@@ -1169,12 +1183,12 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-2xl font-bold">
-                      {(call as any).emotion_stress_index ? (call as any).emotion_stress_index.toFixed(3) : 'Нет данных'}
+                      {emotionStressIndex !== null ? emotionStressIndex.toFixed(3) : 'Нет данных'}
                     </span>
                   </div>
-                  {(call as any).emotion_stress_index && (
+                  {emotionStressIndex !== null && (
                     <Progress 
-                      value={(call as any).emotion_stress_index * 100} 
+                      value={emotionStressIndex * 100} 
                       className="h-2"
                     />
                   )}

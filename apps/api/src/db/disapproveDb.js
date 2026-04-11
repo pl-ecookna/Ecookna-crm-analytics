@@ -11,12 +11,12 @@ export const upsertDisapproveCall = async (payload) => {
     INSERT INTO public.disaproov_calls (
       call_id, call_datetime, client_id, client_phone, user_id, user_name,
       department, brand, call_type, deal_source, product_type, region,
-      user_notes, created_at, file_status, file_url, file_name,
+      user_notes, marketing_channel, created_at, file_status, file_url, file_name,
       retry_count, next_retry_at, last_error
     ) VALUES (
       $1,$2,$3,$4,$5,$6,
       $7,$8,$9,$10,$11,$12,
-      $13,NOW(),'new',$14,$15,
+      $13,$14,NOW(),'new',$15,$16,
       0,NULL,NULL
     )
     ON CONFLICT (call_id) DO UPDATE SET
@@ -32,6 +32,7 @@ export const upsertDisapproveCall = async (payload) => {
       product_type = EXCLUDED.product_type,
       region = EXCLUDED.region,
       user_notes = EXCLUDED.user_notes,
+      marketing_channel = EXCLUDED.marketing_channel,
       file_url = EXCLUDED.file_url,
       file_name = EXCLUDED.file_name,
       file_status = 'new',
@@ -54,6 +55,7 @@ export const upsertDisapproveCall = async (payload) => {
     payload.product_type || null,
     payload.region || null,
     payload.user_notes || null,
+    payload.marketing_channel || null,
     payload.file_url,
     payload.file_name,
   ]);

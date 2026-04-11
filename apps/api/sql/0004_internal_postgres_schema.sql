@@ -36,6 +36,7 @@ CREATE TABLE public.crm_analytics (
   file_status text NOT NULL DEFAULT 'new',
 
   tag text NULL,
+  marketing_channel text NULL,
   is_first_contact boolean NULL,
 
   transcription_crm text NULL,
@@ -143,6 +144,7 @@ CREATE TABLE public.disaproov_calls (
   product_type text NULL,
   region text NULL,
   user_notes text NULL,
+  marketing_channel text NULL,
 
   created_at timestamptz NOT NULL DEFAULT NOW(),
 

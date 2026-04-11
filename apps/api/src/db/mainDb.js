@@ -90,12 +90,12 @@ export const upsertCrmCall = async (payload) => {
     INSERT INTO public.crm_analytics (
       call_id, call_datetime, client_id, client_phone, user_id, user_name,
       department, brand, call_type, file_name, file_url, uploaded_at,
-      file_status, tag, is_first_contact, transcription_crm,
+      file_status, tag, marketing_channel, is_first_contact, transcription_crm,
       retry_count, next_retry_at, last_error, processing_started_at
     ) VALUES (
       $1,$2,$3,$4,$5,$6,
       $7,$8,$9,$10,$11,NOW(),
-      'new',$12,$13,$14,
+      'new',$12,$13,$14,$15,
       0,NULL,NULL,NULL
     )
     ON CONFLICT (call_id) DO UPDATE SET
@@ -112,6 +112,7 @@ export const upsertCrmCall = async (payload) => {
       uploaded_at = EXCLUDED.uploaded_at,
       file_status = 'new',
       tag = EXCLUDED.tag,
+      marketing_channel = EXCLUDED.marketing_channel,
       is_first_contact = EXCLUDED.is_first_contact,
       transcription_crm = EXCLUDED.transcription_crm,
       retry_count = 0,
@@ -133,6 +134,7 @@ export const upsertCrmCall = async (payload) => {
     payload.file_name,
     payload.file_url,
     payload.tag || null,
+    payload.marketing_channel || null,
     payload.is_first_contact ?? null,
     payload.transcription_crm || null,
   ]));
@@ -177,4 +179,3 @@ export const updateCrmById = async (id, patch) => {
   if (!built) return;
   await queryWithRetry(() => mainPool.query(built.text, built.values));
 };
-

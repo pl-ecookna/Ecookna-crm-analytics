@@ -42,6 +42,7 @@ export const ingestWebhookCall = async ({ file, fields }) => {
     product_type: fields.product_type || null,
     region: fields.region || null,
     user_notes: fields.user_notes || null,
+    marketing_channel: fields.marketing_channel || null,
     disapprove_reason: fields.disapprove_reason || null,
     lead_status: fields.lead_status || null,
     lead_ammount: fields.lead_ammount || null,
@@ -69,6 +70,7 @@ export const ingestWebhookCall = async ({ file, fields }) => {
     file_name: payload.file_name,
     file_url: payload.file_url,
     tag: payload.tag,
+    marketing_channel: payload.marketing_channel,
     is_first_contact: payload.tag !== 'Лид',
     transcription_crm: payload.transcription,
   });
