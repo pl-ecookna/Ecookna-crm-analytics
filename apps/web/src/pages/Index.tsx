@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Search, CheckCircle, XCircle, Loader2, FileText, Target, TrendingDown, Star, Clock, ChevronDown, ChevronUp, Trash2, Edit3, Check, X, Phone, MapPin, Package, Globe, MessageSquare, ExternalLink } from "lucide-react";
 import { CrmCallCard } from "@/components/CrmCallCard";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +30,8 @@ const Index = () => {
   
   // CRM States
   const [selectedCrmItem, setSelectedCrmItem] = useState<CrmCallDetails | null>(null);
+  const [crmDetailsOpen, setCrmDetailsOpen] = useState(false);
+  const [crmDetailsLoading, setCrmDetailsLoading] = useState(false);
   const [crmAnalyses, setCrmAnalyses] = useState<CrmCallAnalysis[]>([]);
   const [crmLoading, setCrmLoading] = useState(true);
   const [crmActiveFilter, setCrmActiveFilter] = useState<'all' | 'success' | 'failed'>('all');
@@ -128,6 +130,10 @@ const Index = () => {
   };
 
   const loadCallDetails = async (id: number | string) => {
+    setCrmDetailsOpen(true);
+    setCrmDetailsLoading(true);
+    setSelectedCrmItem(null);
+
     try {
       const call = await api.getCallById(id);
       setSelectedCrmItem(call);
@@ -138,6 +144,10 @@ const Index = () => {
         description: "Не удалось загрузить детали звонка",
         variant: "destructive"
       });
+      setCrmDetailsOpen(false);
+    }
+    finally {
+      setCrmDetailsLoading(false);
     }
   };
 
@@ -510,45 +520,60 @@ const Index = () => {
         </Tabs>
 
         {/* CRM Detail Modal */}
-        <Dialog open={!!selectedCrmItem} onOpenChange={() => setSelectedCrmItem(null)}>
-          <DialogContent className="w-[80vw] max-w-none overflow-y-auto max-h-[90vh]" style={{ width: '80vw' }}>
-            {selectedCrmItem && (
+        <Sheet
+          open={crmDetailsOpen}
+          onOpenChange={(open) => {
+            setCrmDetailsOpen(open);
+            if (!open) {
+              setSelectedCrmItem(null);
+              setCrmDetailsLoading(false);
+            }
+          }}
+        >
+          <SheetContent side="right" className="w-[92vw] max-w-[92vw] overflow-y-auto sm:max-w-[92vw]">
+            {crmDetailsLoading && !selectedCrmItem ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="ml-3">Загружаем детали звонка...</span>
+              </div>
+            ) : selectedCrmItem ? (
               <>
-                <DialogHeader className="space-y-3">
-                  <div className="flex items-center justify-between pr-12">
-                    <DialogTitle className="text-xl">
-                      Анализ звонка из CRM
-                    </DialogTitle>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={selectedCrmItem.call_type === 'входящий' ? 'default' : 'secondary'}>
-                        {selectedCrmItem.call_type || 'Не указан'}
-                      </Badge>
-                      <Badge variant="outline" className={`${
-                        selectedCrmItem.file_status === 'completed' ? 'border-success text-success' :
-                        selectedCrmItem.file_status === 'processing' ? 'border-warning text-warning' :
-                        'border-muted text-muted-foreground'
-                      }`}>
-                        {selectedCrmItem.file_status || 'Новый'}
-                      </Badge>
-                    </div>
+                <SheetHeader className="space-y-3 pr-10 text-left">
+                  <SheetTitle className="text-xl">
+                    Анализ звонка из CRM
+                  </SheetTitle>
+                  <SheetDescription>
+                    Детальная карточка звонка с метриками, стенограммой и признаками качества.
+                  </SheetDescription>
+                  <div className="flex flex-wrap items-center gap-2 pt-2">
+                    <Badge variant={selectedCrmItem.call_type === 'входящий' ? 'default' : 'secondary'}>
+                      {selectedCrmItem.call_type || 'Не указан'}
+                    </Badge>
+                    <Badge variant="outline" className={`${
+                      selectedCrmItem.file_status === 'completed' ? 'border-success text-success' :
+                      selectedCrmItem.file_status === 'processing' ? 'border-warning text-warning' :
+                      'border-muted text-muted-foreground'
+                    }`}>
+                      {selectedCrmItem.file_status || 'Новый'}
+                    </Badge>
                   </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm pt-2">
+                    <div className="rounded-lg border bg-muted/20 p-3">
                       <span className="font-medium">Оператор:</span> {selectedCrmItem.user_name}
                     </div>
-                    <div>
+                    <div className="rounded-lg border bg-muted/20 p-3">
                       <span className="font-medium">Телефон клиента:</span> {selectedCrmItem.client_phone || 'Не указан'}
                     </div>
-                    <div>
+                    <div className="rounded-lg border bg-muted/20 p-3">
                       <span className="font-medium">Дата звонка:</span> {formatDate(selectedCrmItem.call_datetime)}
                     </div>
-                    <div>
+                    <div className="rounded-lg border bg-muted/20 p-3">
                       <span className="font-medium">Общая оценка:</span>
                       <br />
                       {selectedCrmItem.overall_score ? `${selectedCrmItem.overall_score}/10` : "Не оценено"}
                     </div>
-                    <div>
+                    <div className="rounded-lg border bg-muted/20 p-3 sm:col-span-2">
                       <span className="font-medium">Результат звонка:</span>
                       <br />
                       <Badge className={
@@ -561,15 +586,19 @@ const Index = () => {
                       </Badge>
                     </div>
                   </div>
-                </DialogHeader>
+                </SheetHeader>
 
-                <div className="mt-6">
+                <div className="mt-6 space-y-6">
                   <CallDetailsAccordion call={selectedCrmItem} />
                 </div>
               </>
+            ) : (
+              <div className="py-16 text-center text-muted-foreground">
+                Детали звонка не загружены
+              </div>
             )}
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
 
       </div>
     </div>
