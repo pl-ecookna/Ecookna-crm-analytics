@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "turbo run dev --parallel",
+    "dev:local": "bash ./scripts/dev-local.sh",
     "dev:web": "pnpm --filter @ecookna/web dev",
     "dev:api": "pnpm --filter @ecookna/api dev",
     "build": "turbo run build",
