@@ -3,8 +3,9 @@ import dotenv from 'dotenv';
 dotenv.config({ path: process.env.ENV_FILE || '.env' });
 
 const required = [
+  // Prefer DB_MAIN_URL, but keep DB_URL as a backwards/short alias.
+  // If DB_DISAPPROVE_URL is not set, we default it to DB_MAIN_URL.
   'DB_MAIN_URL',
-  'DB_DISAPPROVE_URL',
   'S3_ENDPOINT',
   'S3_BUCKET',
   'S3_ACCESS_KEY_ID',
@@ -14,6 +15,14 @@ const required = [
   'DEEPGRAM_API_KEY',
   'OPENAI_API_KEY',
 ];
+
+const mainDbUrl = process.env.DB_MAIN_URL || process.env.DB_URL;
+if (mainDbUrl) {
+  process.env.DB_MAIN_URL = mainDbUrl;
+}
+if (!process.env.DB_DISAPPROVE_URL) {
+  process.env.DB_DISAPPROVE_URL = process.env.DB_MAIN_URL;
+}
 
 const missing = required.filter((k) => !process.env[k]);
 if (missing.length > 0) {

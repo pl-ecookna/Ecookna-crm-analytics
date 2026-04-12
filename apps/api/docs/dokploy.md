@@ -12,7 +12,6 @@
 Заполнить все переменные из `.env.example`.
 Критичные:
 - `DB_MAIN_URL`
-- `DB_DISAPPROVE_URL`
 - `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`
 - `SBER_AUTH_KEY`, `SBER_SCOPE`
 - `SBER_MODEL` (рекомендуется `callcenter`)
@@ -33,6 +32,9 @@
 Для `DB_MAIN_URL` используйте:
 - локально: внешний Postgres endpoint
 - в Dokploy: внутренний hostname контейнера Postgres
+
+Опционально:
+- `DB_DISAPPROVE_URL` (если не задан, сервис будет использовать `DB_MAIN_URL`, потому что таблица `disaproov_calls` может жить в той же базе)
 
 Перед первым запуском убедиться, что:
 - в основной БД уже созданы `crm_analytics` и `prompts`
