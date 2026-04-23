@@ -164,10 +164,37 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
     return 'text-destructive';
   };
 
+  const getTransferQualityBadgeClass = (score: number | null, transferRequired: boolean | null) => {
+    if (transferRequired === false) return 'bg-muted/10 text-muted-foreground border-muted/20';
+    if (score === null) return 'bg-muted/10 text-muted-foreground border-muted/20';
+    if (score >= 4) return 'bg-success/10 text-success border-success/20';
+    if (score >= 3) return 'bg-warning/10 text-warning border-warning/20';
+    return 'bg-destructive/10 text-destructive border-destructive/20';
+  };
+
+  const getTransferQualityLabel = (score: number | null, transferRequired: boolean | null, transferDone: boolean | null) => {
+    if (transferRequired === false) return 'Не применимо';
+    if (transferDone === false && score !== null) return `${score}/5 · Не выполнен`;
+    if (score === null) return 'Не определено';
+    return `${score}/5`;
+  };
+
+  const getTransferQualityHint = (score: number | null, transferRequired: boolean | null, transferDone: boolean | null) => {
+    if (transferRequired === false) return 'Перевод по сценарию не требовался';
+    if (transferDone === false) return 'Перевод требовался, но не был выполнен';
+    if (score === null) return 'Нет данных по качеству перевода';
+    if (score <= 2) return 'Низкое качество перевода влияет на оценку оператора';
+    if (score === 3) return 'Перевод выполнен частично корректно';
+    return 'Перевод выполнен корректно';
+  };
+
   const formatDuration = (duration: string | null) => {
     if (!duration) return '—';
     return duration;
   };
+
+  const resolvedConversationDuration =
+    call.conversation_duration_total || formatMinutes(call.conversation_duration_minutes);
 
   const { completed, total } = calculateCriteriaScore();
   const operatorEmotionPositive = toNullableNumber((call as any).operator_emotion_positive);
@@ -191,7 +218,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             <div className="ml-auto flex items-center gap-2">
               <Timer className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">
-                {formatDuration(call.conversation_duration_total)}
+                {resolvedConversationDuration}
               </span>
             </div>
           </div>
@@ -208,13 +235,15 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">{formatMinutes(call.conversation_duration_minutes)}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatDuration(call.conversation_duration_total)}
-                </p>
+                {call.conversation_duration_total ? (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {call.conversation_duration_total}
+                  </p>
+                ) : null}
               </CardContent>
             </Card>
 
-            {/* Этапы разговора с прогресс-барами */}
+            {/* Этапы разговора */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Длительность этапов</CardTitle>
@@ -234,17 +263,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                           {call.conversation_stage_greeting || '—'}
                         </span>
                       </div>
-                      {call.conversation_stage_greeting && (
-                        <Progress 
-                          value={(() => {
-                            const match = call.conversation_stage_greeting?.match(/(\d+)/);
-                            const seconds = match ? parseInt(match[1]) : 0;
-                            const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
-                            return (seconds / totalSeconds) * 100;
-                          })()}
-                          className="h-2"
-                        />
-                      )}
                     </div>
 
                     {/* Выяснение */}
@@ -258,17 +276,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                           {call.conversation_stage_request || '—'}
                         </span>
                       </div>
-                      {call.conversation_stage_request && (
-                        <Progress 
-                          value={(() => {
-                            const match = call.conversation_stage_request?.match(/(\d+)/);
-                            const seconds = match ? parseInt(match[1]) : 0;
-                            const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
-                            return (seconds / totalSeconds) * 100;
-                          })()}
-                          className="h-2"
-                        />
-                      )}
                     </div>
                   </div>
 
@@ -285,17 +292,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                           {call.conversation_stage_solution || '—'}
                         </span>
                       </div>
-                      {call.conversation_stage_solution && (
-                        <Progress 
-                          value={(() => {
-                            const match = call.conversation_stage_solution?.match(/(\d+)/);
-                            const seconds = match ? parseInt(match[1]) : 0;
-                            const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
-                            return (seconds / totalSeconds) * 100;
-                          })()}
-                          className="h-2"
-                        />
-                      )}
                     </div>
 
                     {/* Завершение */}
@@ -309,17 +305,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                           {call.conversation_stage_closing || '—'}
                         </span>
                       </div>
-                      {call.conversation_stage_closing && (
-                        <Progress 
-                          value={(() => {
-                            const match = call.conversation_stage_closing?.match(/(\d+)/);
-                            const seconds = match ? parseInt(match[1]) : 0;
-                            const totalSeconds = (call.conversation_duration_minutes || 1) * 60;
-                            return (seconds / totalSeconds) * 100;
-                          })()}
-                          className="h-2"
-                        />
-                      )}
                     </div>
                   </div>
                 </div>
@@ -716,6 +701,38 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                       }
                     </p>
                   )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Repeat className="h-4 w-4" />
+                    Качество перевода звонка
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Badge className={getTransferQualityBadgeClass(call.transfer_quality ?? null, call.transfer_required ?? null)}>
+                      {getTransferQualityLabel(
+                        call.transfer_quality ?? null,
+                        call.transfer_required ?? null,
+                        call.transfer_done ?? null,
+                      )}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground">
+                      {getTransferQualityHint(
+                        call.transfer_quality ?? null,
+                        call.transfer_required ?? null,
+                        call.transfer_done ?? null,
+                      )}
+                    </p>
+                    {call.transfer_comment ? (
+                      <p className="text-sm leading-relaxed">
+                        {call.transfer_comment}
+                      </p>
+                    ) : null}
+                  </div>
                 </CardContent>
               </Card>
             </div>

@@ -79,6 +79,10 @@ CREATE TABLE public.crm_analytics (
 
   stages_score numeric NULL,
   quality_score numeric NULL,
+  transfer_required boolean NULL,
+  transfer_done boolean NULL,
+  transfer_quality numeric NULL,
+  transfer_comment text NULL,
 
   -- Sber insight / эмоции (частично пишется бэкендом, используется UI)
   csi_score numeric NULL,

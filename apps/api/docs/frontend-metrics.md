@@ -52,13 +52,16 @@
 - `compliance_score`
 - `conflict_risk_score`
 - `csi_score`
-- `fcr_score`
 
 ### 3.3 Качественные поля
 - `call_success`
 - `operator_tonality`
 - `burnout_level`
 - `burnout_signs`
+- `transfer_required`
+- `transfer_done`
+- `transfer_quality`
+- `transfer_comment`
 - `conflict_moments`
 - `final_conclusion`
 - `tag`
@@ -126,3 +129,26 @@
 - не использовать `is_solved` (вызывает `insight error` в текущем окружении)
 
 Именно такой режим позволяет сохранить основную визуализацию метрик во фронтенде.
+
+## 8) Рекомендации по метрикам после тестовых прогонов
+
+Оставить как основные:
+- `overall_score`
+- `call_success`
+- `stages_score`
+- `quality_score`
+- `compliance_score`
+- `conflict_risk_score`
+- `conversation_duration_total`
+- `conversation_duration_minutes`
+- `transfer_quality`
+
+Показывать как отдельную прикладную метрику оператора:
+- `transfer_required`
+- `transfer_done`
+- `transfer_quality`
+- `transfer_comment`
+
+Важное правило:
+- `transfer_quality` не смешивается автоматически в `quality_score` и `overall_score`
+- если перевод по сценарию не нужен, в UI должно показываться состояние `Не применимо`

@@ -5,7 +5,7 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
-export interface CallsQueryParams {
+export interface CallsQueryParams extends Record<string, unknown> {
   page?: number;
   pageSize?: number;
   employee?: string;
@@ -30,6 +30,47 @@ export interface CrmCallListItem {
 }
 
 export interface CrmCallDetails extends CrmCallListItem {
+  greeting_correct?: boolean | null;
+  operator_said_name?: boolean | null;
+  cause_identified?: boolean | null;
+  cause_clarified?: boolean | null;
+  address_clarified?: boolean | null;
+  active_listening_done?: boolean | null;
+  answer_complete?: boolean | null;
+  operator_thanked?: boolean | null;
+  client_helped?: boolean | null;
+  conflict_resolved?: boolean | null;
+  conflict_moments?: string | null;
+  conflict_risk_score?: number | null;
+  operator_tonality?: string | null;
+  final_conclusion?: string | null;
+  compliance_score?: number | null;
+  burnout_level?: number | null;
+  burnout_signs?: string | string[] | null;
+  conversation_stage_greeting?: string | null;
+  conversation_stage_request?: string | null;
+  conversation_stage_solution?: string | null;
+  conversation_stage_closing?: string | null;
+  conversation_duration_total?: string | null;
+  stages_score?: number | null;
+  quality_score?: number | null;
+  transfer_required?: boolean | null;
+  transfer_done?: boolean | null;
+  transfer_quality?: number | null;
+  transfer_comment?: string | null;
+  tag?: string | null;
+  transkription?: string | null;
+  transkription_full_json?: unknown;
+  csi_score?: number | null;
+  operator_emotion_positive?: number | null;
+  operator_emotion_neutral?: number | null;
+  operator_emotion_negative?: number | null;
+  client_emotion_positive?: number | null;
+  client_emotion_neutral?: number | null;
+  client_emotion_negative?: number | null;
+  customer_emotion_neg_speech_time_percentage?: number | null;
+  customer_emo_score_mean?: number | null;
+  emotion_stress_index?: number | null;
   [key: string]: unknown;
 }
 

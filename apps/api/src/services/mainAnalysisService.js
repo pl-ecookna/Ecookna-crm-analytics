@@ -43,6 +43,10 @@ const markCompleted = async ({ row, sberJson, transcript, llm, openAiRaw }) => {
     conversation_stage_closing: llm.conversation_stage_closing ?? null,
     conversation_duration_total: llm.conversation_duration_total ?? null,
     conversation_duration_minutes: llm.conversation_duration_minutes ?? null,
+    transfer_required: llm.transfer_required ?? null,
+    transfer_done: llm.transfer_done ?? null,
+    transfer_quality: llm.transfer_quality ?? null,
+    transfer_comment: llm.transfer_comment ?? null,
 
     csi_score: features.csi_score,
     dialog_agent_speech_percentage: features.dialog_agent_speech_percentage,
