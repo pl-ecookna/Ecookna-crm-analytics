@@ -1,38 +1,13 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, MessageSquare, RefreshCw } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import { PromptManagement } from '@/components/admin/PromptManagement';
 
 export default function AdminPanel() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('prompts');
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleBackToAnalytics = () => {
     navigate('/');
-  };
-
-  const handleTriggerProcessing = async () => {
-    setIsProcessing(true);
-    try {
-      const response = await fetch('https://n8n.entechai.ru/webhook/run', {
-        method: 'GET',
-      });
-      
-      if (response.ok) {
-        toast.success('Обработка звонков успешно запущена');
-      } else {
-        toast.error('Ошибка при запуске обработки звонков');
-      }
-    } catch (error) {
-      console.error('Error triggering processing:', error);
-      toast.error('Не удалось запустить обработку звонков');
-    } finally {
-      setIsProcessing(false);
-    }
   };
 
   return (
@@ -59,30 +34,7 @@ export default function AdminPanel() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
-        {/* Trigger Button */}
-        <div className="mb-6 flex justify-end">
-          <Button 
-            onClick={handleTriggerProcessing}
-            disabled={isProcessing}
-            className="gap-2"
-          >
-            <RefreshCw className={`w-4 h-4 ${isProcessing ? 'animate-spin' : ''}`} />
-            {isProcessing ? 'Запуск обработки...' : 'Запустить обработку звонков'}
-          </Button>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-1 mb-6">
-            <TabsTrigger value="prompts" className="flex items-center space-x-2">
-              <MessageSquare className="w-4 h-4" />
-              <span>Промпты</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="prompts" className="space-y-6">
-            <PromptManagement />
-          </TabsContent>
-        </Tabs>
+        <PromptManagement />
       </div>
     </div>
   );
