@@ -4,7 +4,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
-import { Phone, CheckCircle, Loader2, MoreVertical, Trash2, XCircle, Clock, Calendar, User, Building, Briefcase } from "lucide-react";
+import { CheckCircle, Loader2, MoreVertical, Trash2, XCircle, Clock, Calendar, User, Building, Briefcase } from "lucide-react";
 
 interface CrmCallCardProps {
   call: {
@@ -245,13 +245,6 @@ export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick, onDelet
               <span>{formatDuration(call.conversation_duration_minutes)}</span>
             </div>
             
-            {/* Телефон клиента */}
-            {call.client_phone && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Phone className="h-3 w-3" />
-                <span>{call.client_phone}</span>
-              </div>
-            )}
           </div>
           
           {/* Тип звонка */}

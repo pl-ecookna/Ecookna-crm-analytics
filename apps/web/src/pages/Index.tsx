@@ -584,9 +584,6 @@ const Index = () => {
                       <span className="font-medium">Оператор:</span> {selectedCrmItem.user_name}
                     </div>
                     <div className="rounded-lg border bg-muted/20 p-3">
-                      <span className="font-medium">Телефон клиента:</span> {selectedCrmItem.client_phone || 'Не указан'}
-                    </div>
-                    <div className="rounded-lg border bg-muted/20 p-3">
                       <span className="font-medium">Дата звонка:</span> {formatDate(selectedCrmItem.call_datetime)}
                     </div>
                     <div className="rounded-lg border bg-muted/20 p-3">
