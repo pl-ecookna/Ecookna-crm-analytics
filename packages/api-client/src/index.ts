@@ -6,6 +6,7 @@ import type {
   AuthUsersResponse,
   CallsQueryParams,
   CreateAuthUserRequest,
+  CreateAuthUserResponse,
   CrmDeleteCallResult,
   CrmCallDetails,
   CrmCallListItem,
@@ -117,7 +118,7 @@ export const createApiClient = (baseUrl = "") => {
     me: async () => request<AuthMeResponse>("/auth/me"),
     getUsers: async () => request<AuthUsersResponse>("/auth/users"),
     createUser: async (payload: CreateAuthUserRequest) =>
-      request<AuthUser>("/auth/users", {
+      request<CreateAuthUserResponse>("/auth/users", {
         method: "POST",
         body: JSON.stringify(payload),
       }),

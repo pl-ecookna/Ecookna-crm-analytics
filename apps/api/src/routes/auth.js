@@ -13,7 +13,7 @@ import {
   listUsers,
   updateUser,
 } from '../db/authDb.js';
-import { hashPassword, verifyPassword } from '../auth/password.js';
+import { generatePassword, hashPassword, verifyPassword } from '../auth/password.js';
 import {
   buildAuthCookie,
   buildClearAuthCookie,
@@ -50,7 +50,9 @@ const validateUserPayload = ({ email, password, name, role }) => {
   if (!email || !String(email).trim()) return 'Email обязателен';
   if (!name || !String(name).trim()) return 'Имя обязательно';
   if (!role || !allowedRoles.has(role)) return 'Некорректная роль';
-  if (password !== undefined && String(password).length < 8) return 'Пароль должен быть не короче 8 символов';
+  if (password !== undefined && String(password).trim().length > 0 && String(password).trim().length < 8) {
+    return 'Пароль должен быть не короче 8 символов';
+  }
   return null;
 };
 
@@ -141,16 +143,23 @@ router.post('/users', requireAuth, requireRole('admin'), async (req, res) => {
       return res.status(400).json({ error: validationError });
     }
 
+    const explicitPassword = String(payload.password || '').trim();
+    const generatedPassword = explicitPassword ? null : generatePassword();
+    const passwordToStore = explicitPassword || generatedPassword;
+
     const user = await createUser({
       id: crypto.randomUUID(),
       email: payload.email,
-      passwordHash: hashPassword(payload.password),
+      passwordHash: hashPassword(passwordToStore),
       name: String(payload.name).trim(),
       role: payload.role,
       isActive: payload.is_active,
     });
 
-    return res.status(201).json(user);
+    return res.status(201).json({
+      user,
+      generatedPassword,
+    });
   } catch (error) {
     if (error?.code === '23505') {
       return res.status(409).json({ error: 'Пользователь с таким email уже существует' });

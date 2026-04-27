@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   CheckCircle2,
+  Edit2,
   KeyRound,
   Loader2,
   Mail,
@@ -13,7 +14,7 @@ import {
   UserPlus,
   Users,
   XCircle,
-  Edit2,
+  WandSparkles,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -86,6 +87,14 @@ const roleMatrix: RoleInfo[] = [
   },
 ];
 
+const PASSWORD_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%*-_';
+
+const generatePassword = (length = 14) => {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (value) => PASSWORD_CHARSET[value % PASSWORD_CHARSET.length]).join('');
+};
+
 export const UserAccessManagement = () => {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<AuthUser[]>([]);
@@ -148,6 +157,15 @@ export const UserAccessManagement = () => {
       is_active: true,
     });
     setDialogOpen(true);
+  };
+
+  const handleGeneratePassword = () => {
+    const password = generatePassword();
+    setValue('password', password, { shouldDirty: true, shouldValidate: true });
+    toast({
+      title: 'Пароль сгенерирован',
+      description: 'Пароль подставлен в поле и готов к сохранению.',
+    });
   };
 
   const openEditDialog = (user: AuthUser) => {
@@ -489,7 +507,19 @@ export const UserAccessManagement = () => {
                 <Label htmlFor="password">Пароль {editingUser ? '(необязательно)' : ''}</Label>
                 <div className="relative">
                   <KeyRound className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input id="password" type="password" className="pl-9" {...register('password')} />
+                  <Input id="password" type="password" className="pl-9 pr-28" {...register('password')} />
+                  {!editingUser ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1 h-8 gap-2 px-3 text-xs"
+                      onClick={handleGeneratePassword}
+                    >
+                      <WandSparkles className="h-3.5 w-3.5" />
+                      Сгенерировать
+                    </Button>
+                  ) : null}
                 </div>
                 {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
               </div>

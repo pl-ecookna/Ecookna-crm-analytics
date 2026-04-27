@@ -137,10 +137,15 @@ export interface AuthUsersResponse {
 
 export interface CreateAuthUserRequest {
   email: string;
-  password: string;
   name: string;
   role: UserRole;
   is_active?: boolean;
+  password?: string;
+}
+
+export interface CreateAuthUserResponse {
+  user: AuthUser;
+  generatedPassword: string | null;
 }
 
 export interface UpdateAuthUserRequest {
