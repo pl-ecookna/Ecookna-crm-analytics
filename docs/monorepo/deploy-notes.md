@@ -41,7 +41,7 @@
 
 ## Runtime notes
 
-- проект использует только прямой `Postgres`, без Supabase runtime, auth или storage
+- проект использует только прямой `Postgres` и простую cookie-based auth, без Supabase runtime или storage
 - источник данных для `apps/api`: прямой `Postgres`
 - если целевая Postgres-инфраструктура не поддерживает IPv6, для Dokploy нужен IPv4-доступный хост/пулер
 - если API обслуживается только через `https://data.entechai.ru/api`, отдельный внешний `api`-домен не нужен

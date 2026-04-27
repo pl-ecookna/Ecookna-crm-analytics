@@ -3,6 +3,7 @@ import { mainPool } from '../db/mainDb.js';
 import { env } from '../config/env.js';
 import { deleteFromS3 } from '../clients/s3Client.js';
 import { log } from '../utils/logger.js';
+import { requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -98,7 +99,7 @@ router.get('/crm/calls/:id', async (req, res) => {
   }
 });
 
-router.delete('/crm/calls/latest', async (req, res) => {
+router.delete('/crm/calls/latest', requireRole('admin'), async (req, res) => {
   try {
     const limit = Math.min(Math.max(toInt(req.query.limit, 7), 1), 100);
 
@@ -154,7 +155,7 @@ const extractS3Key = ({ fileName, fileUrl }) => {
   }
 };
 
-router.delete('/crm/calls/:id', async (req, res) => {
+router.delete('/crm/calls/:id', requireRole('admin'), async (req, res) => {
   try {
     const id = Number.parseInt(String(req.params.id ?? ''), 10);
     if (!Number.isFinite(id) || id <= 0) {
@@ -226,7 +227,7 @@ router.get('/crm/metrics', async (_req, res) => {
   }
 });
 
-router.get('/prompts', async (_req, res) => {
+router.get('/prompts', requireRole('admin'), async (_req, res) => {
   try {
     const { rows } = await mainPool.query(`
       SELECT id, prompt_key, prompt_name, prompt_text, created_at
@@ -239,7 +240,7 @@ router.get('/prompts', async (_req, res) => {
   }
 });
 
-router.patch('/prompts/:id', async (req, res) => {
+router.patch('/prompts/:id', requireRole('admin'), async (req, res) => {
   try {
     const { prompt_name, prompt_key, prompt_text } = req.body || {};
     const fields = [];
@@ -284,7 +285,7 @@ router.patch('/prompts/:id', async (req, res) => {
   }
 });
 
-router.delete('/prompts/:id', async (req, res) => {
+router.delete('/prompts/:id', requireRole('admin'), async (req, res) => {
   try {
     const { rowCount } = await mainPool.query(
       'DELETE FROM public.prompts WHERE id = $1',

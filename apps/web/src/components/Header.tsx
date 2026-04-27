@@ -1,13 +1,21 @@
-import { ExternalLink, Settings } from 'lucide-react';
+import { ExternalLink, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export const Header = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const rejectedLeadsUrl = 'https://bi.entechai.ru/public/dashboard/26e07d8c-2451-4608-950b-bce04dce9a58';
 
   const handleAdminPanel = () => {
     navigate('/admin');
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -31,16 +39,30 @@ export const Header = () => {
         </div>
 
         {/* Right side */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center gap-3">
+          {user ? (
+            <div className="hidden items-center gap-2 rounded-full border bg-background/80 px-3 py-1.5 text-sm md:flex">
+              <span className="font-medium">{user.name}</span>
+              <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="h-5">
+                {user.role}
+              </Badge>
+            </div>
+          ) : null}
           <Button asChild variant="secondary" size="sm">
             <a href={rejectedLeadsUrl} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="w-4 h-4 mr-2" />
               Отклоненные лиды
             </a>
           </Button>
-          <Button variant="secondary" size="sm" onClick={handleAdminPanel}>
-            <Settings className="w-4 h-4 mr-2" />
-            Админ-панель
+          {user?.role === 'admin' ? (
+            <Button variant="secondary" size="sm" onClick={handleAdminPanel}>
+              <Settings className="w-4 h-4 mr-2" />
+              Админ-панель
+            </Button>
+          ) : null}
+          <Button variant="outline" size="sm" onClick={handleLogout}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Выйти
           </Button>
         </div>
       </div>

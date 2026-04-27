@@ -105,3 +105,44 @@ export interface PromptDto {
   prompt_text: string;
   created_at: string;
 }
+
+export type UserRole = 'admin' | 'call_center';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AuthLoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthLoginResponse {
+  user: AuthUser;
+}
+
+export interface AuthUsersResponse {
+  users: AuthUser[];
+}
+
+export interface CreateAuthUserRequest {
+  email: string;
+  password: string;
+  name: string;
+  role: UserRole;
+  is_active?: boolean;
+}
+
+export interface UpdateAuthUserRequest {
+  email?: string;
+  password?: string;
+  name?: string;
+  role?: UserRole;
+  is_active?: boolean;
+}

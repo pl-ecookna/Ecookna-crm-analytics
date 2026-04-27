@@ -4,6 +4,8 @@ import { env } from './config/env.js';
 import { log } from './utils/logger.js';
 import { webhookRouter } from './routes/webhook.js';
 import { apiRouter } from './routes/api.js';
+import { authRouter } from './routes/auth.js';
+import { requireAuth } from './middleware/auth.js';
 import { runMainWorker } from './workers/mainWorker.js';
 import { runDisapproveWorker } from './workers/disapproveWorker.js';
 
@@ -13,7 +15,9 @@ app.use(express.json({ limit: '5mb' }));
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use('/webhook', webhookRouter);
 app.use('/api/webhook', webhookRouter);
-app.use('/api', apiRouter);
+app.use('/auth', authRouter);
+app.use('/api/auth', authRouter);
+app.use('/api', requireAuth, apiRouter);
 
 if (env.cronEnabled) {
   cron.schedule(env.cronMain, () => {
