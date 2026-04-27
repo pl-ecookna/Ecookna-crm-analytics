@@ -6,6 +6,7 @@ import { webhookRouter } from './routes/webhook.js';
 import { apiRouter } from './routes/api.js';
 import { authRouter } from './routes/auth.js';
 import { requireAuth } from './middleware/auth.js';
+import { ensureAuthSchema } from './db/authBootstrap.js';
 import { runMainWorker } from './workers/mainWorker.js';
 import { runDisapproveWorker } from './workers/disapproveWorker.js';
 
@@ -31,12 +32,23 @@ if (env.cronEnabled) {
   log.info('Cron jobs are disabled', { cronEnabled: env.cronEnabled });
 }
 
-app.listen(env.port, () => {
-  log.info('Service started', {
-    port: env.port,
-    webhookPath: `${env.webhookPath}`,
-    cronEnabled: env.cronEnabled,
-    cronMain: env.cronMain,
-    cronDisapprove: env.cronDisapprove,
+const start = async () => {
+  await ensureAuthSchema();
+
+  app.listen(env.port, () => {
+    log.info('Service started', {
+      port: env.port,
+      webhookPath: `${env.webhookPath}`,
+      cronEnabled: env.cronEnabled,
+      cronMain: env.cronMain,
+      cronDisapprove: env.cronDisapprove,
+    });
   });
+};
+
+start().catch((error) => {
+  log.error('Failed to start service', {
+    error: error?.message || String(error),
+  });
+  process.exit(1);
 });

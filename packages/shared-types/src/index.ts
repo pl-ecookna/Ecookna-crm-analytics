@@ -127,6 +127,10 @@ export interface AuthLoginResponse {
   user: AuthUser;
 }
 
+export interface AuthMeResponse {
+  user: AuthUser | null;
+}
+
 export interface AuthUsersResponse {
   users: AuthUser[];
 }

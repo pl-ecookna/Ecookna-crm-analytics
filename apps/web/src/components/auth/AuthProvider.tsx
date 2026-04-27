@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { createApiClient, ApiError } from "@ecookna/api-client";
+import { createApiClient } from "@ecookna/api-client";
 import type { AuthUser, AuthLoginRequest } from "@ecookna/shared-types";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -24,17 +24,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refresh = async () => {
     try {
-      const currentUser = await api.me();
-      setUser(currentUser);
-      setStatus("authenticated");
-      return currentUser;
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        setUser(null);
-        setStatus("unauthenticated");
-        return null;
+      const response = await api.me();
+      if (response.user) {
+        setUser(response.user);
+        setStatus("authenticated");
+        return response.user;
       }
 
+      setUser(null);
+      setStatus("unauthenticated");
+      return null;
+    } catch (error) {
       console.error("Failed to restore auth session:", error);
       setUser(null);
       setStatus("unauthenticated");

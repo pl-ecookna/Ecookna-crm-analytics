@@ -7,6 +7,7 @@ import {
   deleteSessionByHash,
   deleteSessionsByUserId,
   deleteUserById,
+  getActiveUserBySessionHash,
   getUserByEmail,
   getUserById,
   listUsers,
@@ -98,8 +99,22 @@ router.post('/logout', async (req, res) => {
   }
 });
 
-router.get('/me', requireAuth, async (req, res) => {
-  return res.json(sanitizeUser(req.authUser));
+router.get('/me', async (req, res) => {
+  try {
+    const token = getSessionTokenFromRequest(req);
+    if (!token) {
+      return res.json({ user: null });
+    }
+
+    const user = await getActiveUserBySessionHash(hashSessionToken(token));
+    if (!user) {
+      return res.json({ user: null });
+    }
+
+    return res.json({ user: sanitizeUser(user) });
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to fetch current user', detail: error.message });
+  }
 });
 
 router.get('/users', requireAuth, requireRole('admin'), async (_req, res) => {

@@ -1,6 +1,7 @@
 import type {
   AuthLoginRequest,
   AuthLoginResponse,
+  AuthMeResponse,
   AuthUser,
   AuthUsersResponse,
   CallsQueryParams,
@@ -113,7 +114,7 @@ export const createApiClient = (baseUrl = "") => {
       request<{ ok: true }>("/auth/logout", {
         method: "POST",
       }),
-    me: async () => request<AuthUser>("/auth/me"),
+    me: async () => request<AuthMeResponse>("/auth/me"),
     getUsers: async () => request<AuthUsersResponse>("/auth/users"),
     createUser: async (payload: CreateAuthUserRequest) =>
       request<AuthUser>("/auth/users", {
