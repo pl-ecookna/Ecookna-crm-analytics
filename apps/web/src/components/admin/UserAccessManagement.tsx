@@ -5,6 +5,9 @@ import { z } from 'zod';
 import {
   CheckCircle2,
   Edit2,
+  Copy,
+  Eye,
+  EyeOff,
   KeyRound,
   Loader2,
   Mail,
@@ -103,6 +106,7 @@ export const UserAccessManagement = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AuthUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AuthUser | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -125,6 +129,7 @@ export const UserAccessManagement = () => {
   });
 
   const watchedRole = watch('role');
+  const watchedPassword = watch('password') || '';
   const isEditingCurrentUser = editingUser?.id === currentUser?.id;
 
   useEffect(() => {
@@ -149,6 +154,7 @@ export const UserAccessManagement = () => {
 
   const openCreateDialog = () => {
     setEditingUser(null);
+    setShowPassword(false);
     reset({
       name: '',
       email: '',
@@ -162,14 +168,41 @@ export const UserAccessManagement = () => {
   const handleGeneratePassword = () => {
     const password = generatePassword();
     setValue('password', password, { shouldDirty: true, shouldValidate: true });
+    setShowPassword(true);
     toast({
       title: 'Пароль сгенерирован',
       description: 'Пароль подставлен в поле и готов к сохранению.',
     });
   };
 
+  const handleCopyPassword = async () => {
+    if (!watchedPassword.trim()) {
+      toast({
+        title: 'Пароль пустой',
+        description: 'Сначала сгенерируйте или введите пароль.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(watchedPassword);
+      toast({
+        title: 'Пароль скопирован',
+        description: 'Пароль находится в буфере обмена.',
+      });
+    } catch {
+      toast({
+        title: 'Не удалось скопировать пароль',
+        description: 'Попробуйте еще раз или скопируйте пароль вручную.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const openEditDialog = (user: AuthUser) => {
     setEditingUser(user);
+    setShowPassword(false);
     reset({
       name: user.name,
       email: user.email,
@@ -183,6 +216,7 @@ export const UserAccessManagement = () => {
   const closeDialog = () => {
     setDialogOpen(false);
     setEditingUser(null);
+    setShowPassword(false);
     reset();
   };
 
@@ -507,19 +541,38 @@ export const UserAccessManagement = () => {
                 <Label htmlFor="password">Пароль {editingUser ? '(необязательно)' : ''}</Label>
                 <div className="relative">
                   <KeyRound className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input id="password" type="password" className="pl-9 pr-28" {...register('password')} />
-                  {!editingUser ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-1 top-1 h-8 gap-2 px-3 text-xs"
-                      onClick={handleGeneratePassword}
-                    >
-                      <WandSparkles className="h-3.5 w-3.5" />
-                      Сгенерировать
-                    </Button>
-                  ) : null}
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    className="pl-9 pr-40"
+                    {...register('password')}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={handleGeneratePassword}>
+                    <WandSparkles className="mr-2 h-4 w-4" />
+                    Сгенерировать
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPassword((value) => !value)}
+                    disabled={!watchedPassword.trim()}
+                  >
+                    {showPassword ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                    {showPassword ? 'Скрыть' : 'Показать'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyPassword}
+                    disabled={!watchedPassword.trim()}
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    Копировать
+                  </Button>
                 </div>
                 {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
               </div>

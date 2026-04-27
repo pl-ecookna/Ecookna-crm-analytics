@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import express from 'express';
 import {
+  countAdmins,
   countActiveAdmins,
   createSession,
   createUser,
@@ -240,9 +241,9 @@ router.delete('/users/:id', requireAuth, requireRole('admin'), async (req, res) 
     }
 
     if (target.role === 'admin') {
-      const activeAdmins = await countActiveAdmins();
-      if (activeAdmins <= 1) {
-        return res.status(400).json({ error: 'Нельзя удалить последнего активного админа' });
+      const totalAdmins = await countAdmins();
+      if (totalAdmins <= 1) {
+        return res.status(400).json({ error: 'Нельзя удалить последнего администратора' });
       }
     }
 

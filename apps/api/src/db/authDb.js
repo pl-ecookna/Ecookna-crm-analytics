@@ -144,6 +144,17 @@ export const countActiveAdmins = async () => {
   return rows[0]?.total || 0;
 };
 
+export const countAdmins = async () => {
+  const { rows } = await mainPool.query(
+    `
+      SELECT COUNT(*)::int AS total
+      FROM public.app_users
+      WHERE role = 'admin'
+    `,
+  );
+  return rows[0]?.total || 0;
+};
+
 export const createSession = async ({ tokenHash, userId, expiresAt }) => {
   await mainPool.query(
     `
