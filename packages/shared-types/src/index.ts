@@ -126,6 +126,7 @@ export interface DisapproveAnalyticsResponse {
   topReasons: AnalyticsCountItem[];
   topBrands: AnalyticsCountItem[];
   topDepartments: AnalyticsCountItem[];
+  topRegions: AnalyticsCountItem[];
   monthlyTrend: AnalyticsCountItem[];
   recentLeads: DisapproveLeadListItem[];
 }

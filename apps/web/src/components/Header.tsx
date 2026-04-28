@@ -1,11 +1,12 @@
 import { BarChart3, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 
 export const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
   const handleAdminPanel = () => {
     navigate('/admin');
@@ -14,6 +15,7 @@ export const Header = () => {
   const handleRejectedLeads = () => {
     navigate('/rejected-leads');
   };
+  const isRejectedLeadsPage = location.pathname === '/rejected-leads';
 
   const handleLogout = async () => {
     await logout();
@@ -50,10 +52,12 @@ export const Header = () => {
               </Badge>
             </div>
           ) : null}
-          <Button variant="secondary" size="sm" onClick={handleRejectedLeads}>
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Отклоненные лиды
-          </Button>
+          {!isRejectedLeadsPage ? (
+            <Button variant="secondary" size="sm" onClick={handleRejectedLeads}>
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Отклоненные лиды
+            </Button>
+          ) : null}
           {user?.role === 'admin' ? (
             <Button variant="secondary" size="sm" onClick={handleAdminPanel}>
               <Settings className="w-4 h-4 mr-2" />

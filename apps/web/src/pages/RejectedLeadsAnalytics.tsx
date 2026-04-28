@@ -44,6 +44,8 @@ import {
 } from "@/components/ui/chart";
 import {
   CartesianGrid,
+  Bar,
+  BarChart,
   Line,
   LineChart,
   XAxis,
@@ -77,6 +79,7 @@ const initialData: DisapproveAnalyticsResponse = {
   topReasons: [],
   topBrands: [],
   topDepartments: [],
+  topRegions: [],
   monthlyTrend: [],
   recentLeads: [],
 };
@@ -216,6 +219,11 @@ const RejectedLeadsAnalytics = () => {
     [data.monthlyTrend],
   );
 
+  const regionCounts = useMemo(
+    () => data.topRegions.map((item) => ({ ...item })),
+    [data.topRegions],
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -234,8 +242,7 @@ const RejectedLeadsAnalytics = () => {
                   Разбираем, почему лиды не доходят до сделки
                 </h1>
                 <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
-                  Страница строится по таблице <span className="font-medium text-foreground">disaproov_calls</span> и
-                  показывает причины отказов, динамику по месяцам, распределение по брендам и подразделениям, а также
+                  Показывает причины отказов, динамику по месяцам, распределение по брендам и подразделениям, а также
                   свежие записи для ручной проверки.
                 </p>
               </div>
@@ -245,15 +252,6 @@ const RejectedLeadsAnalytics = () => {
               <Button variant="outline" onClick={() => navigate("/")}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 К звонкам
-              </Button>
-              <Button asChild variant="secondary">
-                <a
-                  href="https://bi.entechai.ru/public/dashboard/26e07d8c-2451-4608-950b-bce04dce9a58"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Открыть BI
-                </a>
               </Button>
             </div>
           </div>
@@ -350,6 +348,42 @@ const RejectedLeadsAnalytics = () => {
             </CardContent>
           </Card>
         </section>
+
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle>Распределение отказов по регионам</CardTitle>
+            <CardDescription>Топ регионов по количеству отклоненных лидов</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-dashed bg-muted/20 text-sm text-muted-foreground">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Загрузка графика...
+              </div>
+            ) : regionCounts.length === 0 ? (
+              <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-dashed bg-muted/20 text-sm text-muted-foreground">
+                Нет данных по регионам
+              </div>
+            ) : (
+              <ChartContainer config={chartConfig} className="h-[360px] w-full">
+                <BarChart data={regionCounts} layout="vertical" margin={{ left: 12, right: 24 }}>
+                  <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                  <XAxis type="number" tickLine={false} axisLine={false} tickMargin={8} />
+                  <YAxis
+                    dataKey="label"
+                    type="category"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    width={160}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                  <Bar dataKey="count" fill="var(--color-count)" radius={8} />
+                </BarChart>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="border-border/70 shadow-sm">
           <CardHeader className="space-y-2">

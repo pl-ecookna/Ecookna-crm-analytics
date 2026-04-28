@@ -40,6 +40,18 @@ const normalizeCountLabel = (value, fallback) => {
   return text || fallback;
 };
 
+const countJsonbObjectKeysExpr = `
+  (
+    SELECT COALESCE(SUM(reason_count), 0)::int
+    FROM (
+      SELECT COUNT(r.key) AS reason_count
+      FROM public.disaproov_calls d
+      LEFT JOIN LATERAL jsonb_each_text(COALESCE(d.reject_reasons, '{}'::jsonb)) AS r(key, value) ON true
+      GROUP BY d.id
+    ) reason_counts
+  )
+`;
+
 router.get('/crm/calls', async (req, res) => {
   try {
     const page = Math.max(toInt(req.query.page, 1), 1);
@@ -242,6 +254,7 @@ router.get('/crm/disapprove/analytics', async (req, res) => {
       topReasonsResult,
       topBrandsResult,
       topDepartmentsResult,
+      topRegionsResult,
       monthlyTrendResult,
       recentLeadsResult,
     ] = await Promise.all([
@@ -258,7 +271,7 @@ router.get('/crm/disapprove/analytics', async (req, res) => {
           COUNT(DISTINCT user_name) FILTER (WHERE user_name IS NOT NULL)::int AS "uniqueEmployees",
           COUNT(DISTINCT department) FILTER (WHERE department IS NOT NULL)::int AS "uniqueDepartments",
           COUNT(DISTINCT brand) FILTER (WHERE brand IS NOT NULL)::int AS "uniqueBrands",
-          COALESCE(SUM(COALESCE(jsonb_object_length(reject_reasons), 0)), 0)::int AS "reasonEntries",
+          ${countJsonbObjectKeysExpr} AS "reasonEntries",
           MIN(call_datetime) AS "minCallDatetime",
           MAX(call_datetime) AS "maxCallDatetime"
         FROM public.disaproov_calls
@@ -290,6 +303,18 @@ router.get('/crm/disapprove/analytics', async (req, res) => {
         `
         SELECT
           COALESCE(department, 'Без подразделения') AS label,
+          COUNT(*)::int AS count
+        FROM public.disaproov_calls
+        GROUP BY 1
+        ORDER BY count DESC, label ASC
+        LIMIT $1
+        `,
+        [topLimit],
+      ),
+      mainPool.query(
+        `
+        SELECT
+          COALESCE(NULLIF(TRIM(region), ''), 'Без региона') AS label,
           COUNT(*)::int AS count
         FROM public.disaproov_calls
         GROUP BY 1
@@ -372,6 +397,10 @@ router.get('/crm/disapprove/analytics', async (req, res) => {
       })),
       topDepartments: topDepartmentsResult.rows.map((row) => ({
         label: normalizeCountLabel(row.label, 'Без подразделения'),
+        count: Number(row.count || 0),
+      })),
+      topRegions: topRegionsResult.rows.map((row) => ({
+        label: normalizeCountLabel(row.label, 'Без региона'),
         count: Number(row.count || 0),
       })),
       monthlyTrend: monthlyTrendResult.rows.map((row) => ({
