@@ -35,6 +35,11 @@ const buildCallFilters = (query) => {
   };
 };
 
+const normalizeCountLabel = (value, fallback) => {
+  const text = String(value ?? '').trim();
+  return text || fallback;
+};
+
 router.get('/crm/calls', async (req, res) => {
   try {
     const page = Math.max(toInt(req.query.page, 1), 1);
@@ -224,6 +229,159 @@ router.get('/crm/metrics', async (_req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch CRM metrics', detail: error.message });
+  }
+});
+
+router.get('/crm/disapprove/analytics', async (req, res) => {
+  try {
+    const topLimit = Math.min(Math.max(toInt(req.query.topLimit, 10), 1), 50);
+    const recentLimit = Math.min(Math.max(toInt(req.query.recentLimit, 12), 1), 50);
+
+    const [
+      summaryResult,
+      topReasonsResult,
+      topBrandsResult,
+      topDepartmentsResult,
+      monthlyTrendResult,
+      recentLeadsResult,
+    ] = await Promise.all([
+      mainPool.query(`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE file_status = 'completed')::int AS completed,
+          COUNT(*) FILTER (WHERE file_status = 'failed')::int AS failed,
+          COUNT(*) FILTER (WHERE file_status = 'processing')::int AS processing,
+          COUNT(*) FILTER (
+            WHERE reject_reasons IS NOT NULL
+              AND reject_reasons <> '{}'::jsonb
+          )::int AS "withReasons",
+          COUNT(DISTINCT user_name) FILTER (WHERE user_name IS NOT NULL)::int AS "uniqueEmployees",
+          COUNT(DISTINCT department) FILTER (WHERE department IS NOT NULL)::int AS "uniqueDepartments",
+          COUNT(DISTINCT brand) FILTER (WHERE brand IS NOT NULL)::int AS "uniqueBrands",
+          COALESCE(SUM(COALESCE(jsonb_object_length(reject_reasons), 0)), 0)::int AS "reasonEntries",
+          MIN(call_datetime) AS "minCallDatetime",
+          MAX(call_datetime) AS "maxCallDatetime"
+        FROM public.disaproov_calls
+      `),
+      mainPool.query(
+        `
+        SELECT key AS label, COUNT(*)::int AS count
+        FROM public.disaproov_calls d
+        CROSS JOIN LATERAL jsonb_each_text(COALESCE(d.reject_reasons, '{}'::jsonb))
+        GROUP BY 1
+        ORDER BY count DESC, label ASC
+        LIMIT $1
+        `,
+        [topLimit],
+      ),
+      mainPool.query(
+        `
+        SELECT
+          COALESCE(brand, 'Без бренда') AS label,
+          COUNT(*)::int AS count
+        FROM public.disaproov_calls
+        GROUP BY 1
+        ORDER BY count DESC, label ASC
+        LIMIT $1
+        `,
+        [topLimit],
+      ),
+      mainPool.query(
+        `
+        SELECT
+          COALESCE(department, 'Без подразделения') AS label,
+          COUNT(*)::int AS count
+        FROM public.disaproov_calls
+        GROUP BY 1
+        ORDER BY count DESC, label ASC
+        LIMIT $1
+        `,
+        [topLimit],
+      ),
+      mainPool.query(`
+        SELECT
+          to_char(date_trunc('month', call_datetime), 'YYYY-MM') AS label,
+          COUNT(*)::int AS count
+        FROM public.disaproov_calls
+        GROUP BY 1
+        ORDER BY 1 ASC
+      `),
+      mainPool.query(
+        `
+        SELECT
+          id,
+          call_id,
+          call_datetime,
+          user_name,
+          department,
+          brand,
+          call_type,
+          deal_source,
+          product_type,
+          region,
+          file_status,
+          reject_reasons,
+          created_at
+        FROM public.disaproov_calls
+        ORDER BY call_datetime DESC NULLS LAST, id DESC
+        LIMIT $1
+        `,
+        [recentLimit],
+      ),
+    ]);
+
+    const summary = summaryResult.rows[0] || {
+      total: 0,
+      completed: 0,
+      failed: 0,
+      processing: 0,
+      withReasons: 0,
+      uniqueEmployees: 0,
+      uniqueDepartments: 0,
+      uniqueBrands: 0,
+      reasonEntries: 0,
+      minCallDatetime: null,
+      maxCallDatetime: null,
+    };
+
+    const total = Number(summary.total || 0);
+    const reasonEntries = Number(summary.reasonEntries || 0);
+
+    res.json({
+      summary: {
+        total,
+        completed: Number(summary.completed || 0),
+        failed: Number(summary.failed || 0),
+        processing: Number(summary.processing || 0),
+        withReasons: Number(summary.withReasons || 0),
+        uniqueEmployees: Number(summary.uniqueEmployees || 0),
+        uniqueDepartments: Number(summary.uniqueDepartments || 0),
+        uniqueBrands: Number(summary.uniqueBrands || 0),
+        reasonEntries,
+        averageReasonsPerLead: total > 0 ? Number((reasonEntries / total).toFixed(2)) : 0,
+        minCallDatetime: summary.minCallDatetime || null,
+        maxCallDatetime: summary.maxCallDatetime || null,
+      },
+      topReasons: topReasonsResult.rows.map((row) => ({
+        label: normalizeCountLabel(row.label, 'Без причины'),
+        count: Number(row.count || 0),
+      })),
+      topBrands: topBrandsResult.rows.map((row) => ({
+        label: normalizeCountLabel(row.label, 'Без бренда'),
+        count: Number(row.count || 0),
+      })),
+      topDepartments: topDepartmentsResult.rows.map((row) => ({
+        label: normalizeCountLabel(row.label, 'Без подразделения'),
+        count: Number(row.count || 0),
+      })),
+      monthlyTrend: monthlyTrendResult.rows.map((row) => ({
+        label: normalizeCountLabel(row.label, 'Без даты'),
+        count: Number(row.count || 0),
+      })),
+      recentLeads: recentLeadsResult.rows,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch disapprove analytics', detail: error.message });
   }
 });
 

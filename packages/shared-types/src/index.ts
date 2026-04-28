@@ -85,6 +85,51 @@ export interface CrmMetricsResponse {
   brands: string[];
 }
 
+export interface AnalyticsCountItem {
+  label: string;
+  count: number;
+}
+
+export interface DisapproveLeadListItem {
+  id: number | string;
+  call_id: string | null;
+  call_datetime: string | null;
+  user_name: string | null;
+  department: string | null;
+  brand: string | null;
+  call_type: string | null;
+  deal_source: string | null;
+  product_type: string | null;
+  region: string | null;
+  file_status: string | null;
+  reject_reasons: Record<string, boolean> | null;
+  created_at: string;
+}
+
+export interface DisapproveAnalyticsSummary {
+  total: number;
+  completed: number;
+  failed: number;
+  processing: number;
+  withReasons: number;
+  uniqueEmployees: number;
+  uniqueDepartments: number;
+  uniqueBrands: number;
+  reasonEntries: number;
+  averageReasonsPerLead: number;
+  minCallDatetime: string | null;
+  maxCallDatetime: string | null;
+}
+
+export interface DisapproveAnalyticsResponse {
+  summary: DisapproveAnalyticsSummary;
+  topReasons: AnalyticsCountItem[];
+  topBrands: AnalyticsCountItem[];
+  topDepartments: AnalyticsCountItem[];
+  monthlyTrend: AnalyticsCountItem[];
+  recentLeads: DisapproveLeadListItem[];
+}
+
 export interface CrmDeleteResponse {
   deleted: true;
   id: number;

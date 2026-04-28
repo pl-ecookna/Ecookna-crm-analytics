@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { PublicOnly, RequireAuth, RequireRole } from "@/components/auth/RouteGuards";
 import Index from "./pages/Index";
+import RejectedLeadsAnalytics from "./pages/RejectedLeadsAnalytics";
 import AdminPanel from "./pages/AdminPanel";
 import LoginPage from "./pages/Login";
 import AccessDenied from "./pages/AccessDenied";
@@ -40,6 +41,14 @@ const App = () => (
               element={
                 <RequireAuth>
                   <Index />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/rejected-leads"
+              element={
+                <RequireAuth>
+                  <RejectedLeadsAnalytics />
                 </RequireAuth>
               }
             />

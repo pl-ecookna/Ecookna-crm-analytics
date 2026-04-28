@@ -1,4 +1,4 @@
-import { ExternalLink, LogOut, Settings } from 'lucide-react';
+import { BarChart3, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -7,10 +7,12 @@ import { useAuth } from '@/components/auth/AuthProvider';
 export const Header = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const rejectedLeadsUrl = 'https://bi.entechai.ru/public/dashboard/26e07d8c-2451-4608-950b-bce04dce9a58';
-
   const handleAdminPanel = () => {
     navigate('/admin');
+  };
+
+  const handleRejectedLeads = () => {
+    navigate('/rejected-leads');
   };
 
   const handleLogout = async () => {
@@ -48,11 +50,9 @@ export const Header = () => {
               </Badge>
             </div>
           ) : null}
-          <Button asChild variant="secondary" size="sm">
-            <a href={rejectedLeadsUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Отклоненные лиды
-            </a>
+          <Button variant="secondary" size="sm" onClick={handleRejectedLeads}>
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Отклоненные лиды
           </Button>
           {user?.role === 'admin' ? (
             <Button variant="secondary" size="sm" onClick={handleAdminPanel}>

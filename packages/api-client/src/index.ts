@@ -4,6 +4,7 @@ import type {
   AuthMeResponse,
   AuthUser,
   AuthUsersResponse,
+  DisapproveAnalyticsResponse,
   CallsQueryParams,
   CreateAuthUserRequest,
   CreateAuthUserResponse,
@@ -139,7 +140,7 @@ export const createApiClient = (baseUrl = "") => {
       request<CrmDeleteCallResult>(`/crm/calls/${id}`, {
         method: "DELETE",
       }),
-    deleteLatestCrmCalls: async (limit = 7) =>
+  deleteLatestCrmCalls: async (limit = 7) =>
       request<{ deletedCount: number; deletedIds: number[] }>(
         `/crm/calls/latest${buildQuery({ limit })}`,
         {
@@ -147,6 +148,10 @@ export const createApiClient = (baseUrl = "") => {
         },
       ),
     getMetrics: async () => request<CrmMetricsResponse>("/crm/metrics"),
+    getDisapproveAnalytics: async (params: { topLimit?: number; recentLimit?: number } = {}) =>
+      request<DisapproveAnalyticsResponse>(
+        `/crm/disapprove/analytics${buildQuery(params)}`,
+      ),
     getPrompts: async () => request<PromptDto[]>("/prompts"),
     updatePrompt: async (id: number, payload: Partial<PromptDto>) =>
       request<PromptDto>(`/prompts/${id}`, {
