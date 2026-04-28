@@ -6,6 +6,8 @@ services:
     image: crm-analytics-back:latest
     container_name: crm-analytics-back
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
     ports:

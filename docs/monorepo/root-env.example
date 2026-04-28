@@ -2,7 +2,7 @@
 NODE_ENV=development
 
 # Web
-VITE_API_BASE_URL=http://localhost:3000
+VITE_API_BASE_URL=/api
 
 # API
 PORT=3000
@@ -10,7 +10,8 @@ CRM_WEBHOOK_PATH=/webhook/getcrmdata
 CRM_WEBHOOK_MAX_FILE_AGE_DAYS=30
 
 DB_MAIN_URL=postgresql://postgres:<password>@<host>:5432/postgres?sslmode=require
-DB_DISAPPROVE_URL=postgresql://<user>:<password>@<host>:<port>/<db>
+# Optional:
+# DB_DISAPPROVE_URL=postgresql://<user>:<password>@<host>:<port>/<db>
 
 S3_ENDPOINT=https://s3.ru1.storage.beget.cloud
 S3_REGION=ru1
@@ -29,10 +30,14 @@ SBER_TASK_URL=https://smartspeech.sber.ru/rest/v1/task:get
 SBER_DOWNLOAD_URL=https://smartspeech.sber.ru/rest/v1/data:download
 SBER_SAMPLE_RATE=
 SBER_CHANNELS_COUNT=
+SBER_POLL_INTERVAL_MS=2500
+SBER_POLL_TIMEOUT_MS=180000
 
 DEEPGRAM_API_KEY=<deepgram_token>
+DEEPGRAM_URL=https://api.deepgram.com/v1/listen
 OPENAI_API_KEY=<openai_key>
 OPENAI_MODEL=gpt-4o
+OPENAI_URL=https://api.openai.com/v1/chat/completions
 
 CRON_ENABLED=false
 RETRY_MAX_ATTEMPTS=3
