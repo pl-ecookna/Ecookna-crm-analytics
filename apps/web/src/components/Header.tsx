@@ -52,6 +52,12 @@ export const Header = () => {
               </Badge>
             </div>
           ) : null}
+          {isRejectedLeadsPage ? (
+            <Button variant="outline" size="sm" onClick={() => navigate("/")}>
+              <BarChart3 className="w-4 h-4 mr-2" />
+              К звонкам
+            </Button>
+          ) : null}
           {!isRejectedLeadsPage ? (
             <Button variant="secondary" size="sm" onClick={handleRejectedLeads}>
               <BarChart3 className="w-4 h-4 mr-2" />

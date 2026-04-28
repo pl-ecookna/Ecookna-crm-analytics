@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
-  ArrowLeft,
   BarChart3,
   CalendarDays,
   CheckCircle2,
@@ -13,7 +12,6 @@ import {
   UserRound,
   Warehouse,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { createApiClient } from "@ecookna/api-client";
 import type {
   AnalyticsCountItem,
@@ -153,7 +151,6 @@ const CountList = ({
 };
 
 const RejectedLeadsAnalytics = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [data, setData] = useState<DisapproveAnalyticsResponse>(initialData);
   const [loading, setLoading] = useState(true);
@@ -248,12 +245,6 @@ const RejectedLeadsAnalytics = () => {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Button variant="outline" onClick={() => navigate("/")}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                К звонкам
-              </Button>
-            </div>
           </div>
         </section>
 
