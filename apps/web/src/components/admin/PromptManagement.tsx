@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -49,11 +49,7 @@ export const PromptManagement = () => {
 
   const watchedText = watch('prompt_text', '');
 
-  useEffect(() => {
-    fetchPrompts();
-  }, []);
-
-  const fetchPrompts = async () => {
+  const fetchPrompts = useCallback(async () => {
     try {
       const data = await api.getPrompts();
       setPrompts(data || []);
@@ -66,7 +62,11 @@ export const PromptManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void fetchPrompts();
+  }, [fetchPrompts]);
 
   const onSubmit = async (data: PromptFormData) => {
     try {
@@ -81,9 +81,10 @@ export const PromptManagement = () => {
         handleCloseDialog();
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : '';
       toast({
         title: 'Ошибка',
-        description: `Не удалось сохранить промпт: ${ (error as any)?.message || '' }`,
+        description: `Не удалось сохранить промпт: ${message}`,
         variant: 'destructive',
       });
     }

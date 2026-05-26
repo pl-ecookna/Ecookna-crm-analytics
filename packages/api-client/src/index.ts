@@ -140,7 +140,11 @@ export const createApiClient = (baseUrl = "") => {
       request<CrmDeleteCallResult>(`/crm/calls/${id}`, {
         method: "DELETE",
       }),
-  deleteLatestCrmCalls: async (limit = 7) =>
+    reprocessCallLlm: async (id: string | number) =>
+      request<CrmCallDetails>(`/crm/calls/${id}/reprocess-llm`, {
+        method: "POST",
+      }),
+    deleteLatestCrmCalls: async (limit = 7) =>
       request<{ deletedCount: number; deletedIds: number[] }>(
         `/crm/calls/latest${buildQuery({ limit })}`,
         {

@@ -17,20 +17,11 @@ import {
   User,
   AlertTriangle,
   Star,
-  Calendar,
   Timer,
   HandMetal,
-  Smile,
-  Frown,
-  Meh,
-  Volume,
-  VolumeX,
   Mic,
-  MicOff,
   Repeat,
-  Pause,
   Activity,
-  Zap
 } from "lucide-react";
 import TranscriptDisplay from "./TranscriptDisplay";
 import type { CrmCallDetails } from "@ecookna/shared-types";
@@ -61,7 +52,11 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
   // Функция извлечения данных из transkription_full_json
   const getCallFeature = (featureName: string): number | null => {
     try {
-      const json = (call as any).transkription_full_json;
+      const json = call.transkription_full_json as {
+        insight_result?: {
+          call_features?: Record<string, unknown>;
+        };
+      } | null | undefined;
       if (!json?.insight_result?.call_features) return null;
       return toNullableNumber(json.insight_result.call_features[featureName]);
     } catch {
@@ -93,36 +88,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
     return `${wordsPerMinute} сл/мин`;
   };
 
-  // Расчёт баланса диалога
-  const calculateSpeechBalance = (): string => {
-    const agentPercentage = getCallFeature('dialog_agent_speech_percentage');
-    const customerPercentage = getCallFeature('dialog_customer_speech_percentage');
-    
-    if (!agentPercentage || !customerPercentage) return '—';
-    
-    const ratio = agentPercentage / customerPercentage;
-    return `${ratio.toFixed(1)}:1`;
-  };
-
-  // Получение цвета для доли тишины
-  const getSilenceColor = (silencePercentage: number | null): string => {
-    if (silencePercentage === null) return 'text-muted-foreground';
-    const percentage = silencePercentage * 100;
-    if (percentage > 60) return 'text-destructive';
-    if (percentage > 40) return 'text-warning';
-    return 'text-success';
-  };
-
-  // Получение цвета для баланса речи
-  const getBalanceColor = (agentPercentage: number | null, customerPercentage: number | null): string => {
-    if (!agentPercentage || !customerPercentage) return 'text-muted-foreground';
-    const ratio = agentPercentage / customerPercentage;
-    // Оптимальный баланс 1.5:1 - 2:1
-    if (ratio >= 1.5 && ratio <= 2) return 'text-success';
-    if (ratio >= 1.2 && ratio <= 2.5) return 'text-warning';
-    return 'text-destructive';
-  };
-  
   // Утилитарные функции
   const calculateCriteriaScore = () => {
     const criteria = [
@@ -197,15 +162,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
     call.conversation_duration_total || formatMinutes(call.conversation_duration_minutes);
 
   const { completed, total } = calculateCriteriaScore();
-  const operatorEmotionPositive = toNullableNumber((call as any).operator_emotion_positive);
-  const operatorEmotionNeutral = toNullableNumber((call as any).operator_emotion_neutral);
-  const operatorEmotionNegative = toNullableNumber((call as any).operator_emotion_negative);
-  const clientEmotionPositive = toNullableNumber((call as any).client_emotion_positive);
-  const clientEmotionNeutral = toNullableNumber((call as any).client_emotion_neutral);
-  const clientEmotionNegative = toNullableNumber((call as any).client_emotion_negative);
-  const customerEmotionNegSpeechTimePercentage = toNullableNumber((call as any).customer_emotion_neg_speech_time_percentage);
-  const customerEmoScoreMean = toNullableNumber((call as any).customer_emo_score_mean);
-  const emotionStressIndex = toNullableNumber((call as any).emotion_stress_index);
 
   return (
     <Accordion type="multiple" className="space-y-2">
@@ -596,47 +552,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               </CardContent>
             </Card>
 
-            {/* CSI Score */}
-            <Card className={(call as any).csi_score == null ? "opacity-60" : ""}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Smile className="h-4 w-4" />
-                  CSI Score
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Оценка</span>
-                    {(call as any).csi_score != null ? (
-                      <span className={`text-2xl font-bold ${(call as any).csi_score === 1 ? 'text-success' : 'text-destructive'}`}>
-                        {(call as any).csi_score}
-                      </span>
-                    ) : (
-                      <span className="text-2xl font-bold text-muted-foreground">—</span>
-                    )}
-                  </div>
-                  {(call as any).csi_score != null ? (
-                    <Progress 
-                      value={(call as any).csi_score * 100} 
-                      className="h-3"
-                    />
-                  ) : (
-                    <Progress 
-                      value={0} 
-                      className="h-3 opacity-50"
-                    />
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {(call as any).csi_score != null 
-                      ? ((call as any).csi_score === 1 ? 'Позитивная оценка' : 'Негативная оценка')
-                      : 'Нет данных'
-                    }
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
           </div>
         </AccordionContent>
       </AccordionItem>
@@ -666,7 +581,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <Smile className="h-4 w-4" />
+                    <Mic className="h-4 w-4" />
                     Тональность оператора
                   </CardTitle>
                 </CardHeader>
@@ -991,171 +906,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
         </AccordionContent>
       </AccordionItem>
 
-      {/* 6. Эмоции */}
-      <AccordionItem value="emotions" className="border rounded-lg">
-        <AccordionTrigger className="px-4 py-3 hover:no-underline">
-          <div className="flex items-center gap-3 w-full">
-            <Smile className="h-5 w-5 text-primary" />
-            <span className="text-base font-medium">Эмоции</span>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="px-4 pb-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Эмоции оператора */}
-            <Card className={!operatorEmotionPositive ? "opacity-60" : ""}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Mic className="h-4 w-4" />
-                  Эмоции оператора
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Smile className="h-3 w-3 text-success" />
-                      Позитивные
-                    </span>
-                    <span className="font-medium">
-                      {operatorEmotionPositive !== null ? `${(operatorEmotionPositive * 100).toFixed(1)}%` : 'Нет данных'}
-                    </span>
-                  </div>
-                  {operatorEmotionPositive !== null && (
-                    <Progress value={operatorEmotionPositive * 100} className="h-2" />
-                  )}
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Meh className="h-3 w-3 text-warning" />
-                      Нейтральные
-                    </span>
-                    <span className="font-medium">
-                      {operatorEmotionNeutral !== null ? `${(operatorEmotionNeutral * 100).toFixed(1)}%` : 'Нет данных'}
-                    </span>
-                  </div>
-                  {operatorEmotionNeutral !== null && (
-                    <Progress value={operatorEmotionNeutral * 100} className="h-2" />
-                  )}
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Frown className="h-3 w-3 text-destructive" />
-                      Негативные
-                    </span>
-                    <span className="font-medium">
-                      {operatorEmotionNegative !== null ? `${(operatorEmotionNegative * 100).toFixed(1)}%` : 'Нет данных'}
-                    </span>
-                  </div>
-                  {operatorEmotionNegative !== null && (
-                    <Progress value={operatorEmotionNegative * 100} className="h-2" />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Эмоции клиента */}
-            <Card className={!clientEmotionPositive ? "opacity-60" : ""}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Эмоции клиента
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Smile className="h-3 w-3 text-success" />
-                      Позитивные
-                    </span>
-                    <span className="font-medium">
-                      {clientEmotionPositive !== null ? `${(clientEmotionPositive * 100).toFixed(1)}%` : 'Нет данных'}
-                    </span>
-                  </div>
-                  {clientEmotionPositive !== null && (
-                    <Progress value={clientEmotionPositive * 100} className="h-2" />
-                  )}
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Meh className="h-3 w-3 text-warning" />
-                      Нейтральные
-                    </span>
-                    <span className="font-medium">
-                      {clientEmotionNeutral !== null ? `${(clientEmotionNeutral * 100).toFixed(1)}%` : 'Нет данных'}
-                    </span>
-                  </div>
-                  {clientEmotionNeutral !== null && (
-                    <Progress value={clientEmotionNeutral * 100} className="h-2" />
-                  )}
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Frown className="h-3 w-3 text-destructive" />
-                      Негативные
-                    </span>
-                    <span className="font-medium">
-                      {clientEmotionNegative !== null ? `${(clientEmotionNegative * 100).toFixed(1)}%` : 'Нет данных'}
-                    </span>
-                  </div>
-                  {clientEmotionNegative !== null && (
-                    <Progress value={clientEmotionNegative * 100} className="h-2" />
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center pt-2 border-t">
-                  <span className="text-xs text-muted-foreground">Время негативных эмоций</span>
-                  <span className="font-medium">
-                    {customerEmotionNegSpeechTimePercentage !== null ? `${(customerEmotionNegSpeechTimePercentage * 100).toFixed(1)}%` : 'Нет данных'}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Средний эмоц. счет</span>
-                  <span className="font-medium">
-                    {customerEmoScoreMean !== null ? customerEmoScoreMean.toFixed(2) : 'Нет данных'}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Индекс стресса */}
-            <Card className={!emotionStressIndex ? "opacity-60" : ""}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Activity className="h-4 w-4" />
-                  Индекс стресса
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold">
-                      {emotionStressIndex !== null ? emotionStressIndex.toFixed(3) : 'Нет данных'}
-                    </span>
-                  </div>
-                  {emotionStressIndex !== null && (
-                    <Progress 
-                      value={emotionStressIndex * 100} 
-                      className="h-2"
-                    />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-
-      {/* 7. Стенограмма */}
+      {/* 6. Стенограмма */}
       <AccordionItem value="transcript" className="border rounded-lg">
         <AccordionTrigger className="px-4 py-3 hover:no-underline">
           <div className="flex items-center gap-3 w-full">

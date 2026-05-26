@@ -61,16 +61,6 @@ export interface CrmCallDetails extends CrmCallListItem {
   tag?: string | null;
   transkription?: string | null;
   transkription_full_json?: unknown;
-  csi_score?: number | null;
-  operator_emotion_positive?: number | null;
-  operator_emotion_neutral?: number | null;
-  operator_emotion_negative?: number | null;
-  client_emotion_positive?: number | null;
-  client_emotion_neutral?: number | null;
-  client_emotion_negative?: number | null;
-  customer_emotion_neg_speech_time_percentage?: number | null;
-  customer_emo_score_mean?: number | null;
-  emotion_stress_index?: number | null;
   [key: string]: unknown;
 }
 

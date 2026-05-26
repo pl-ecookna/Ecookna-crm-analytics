@@ -189,6 +189,35 @@ export const claimCrmCalls = async (limit) => queryWithRetry(async () => {
   }
 });
 
+export const getCrmCallByCallId = async (callId) => {
+  const res = await queryWithRetry(() => mainPool.query(
+    `
+    SELECT *
+    FROM public.crm_analytics
+    WHERE call_id = $1
+    ORDER BY id DESC
+    LIMIT 1
+    `,
+    [callId],
+  ));
+
+  return res.rows[0] || null;
+};
+
+export const getCrmCallById = async (id) => {
+  const res = await queryWithRetry(() => mainPool.query(
+    `
+    SELECT *
+    FROM public.crm_analytics
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [id],
+  ));
+
+  return res.rows[0] || null;
+};
+
 export const updateCrmById = async (id, patch) => {
   const built = buildPatchQuery('crm_analytics', id, patch);
   if (!built) return;

@@ -89,7 +89,7 @@ docker compose up -d --build
 ## Внешние интеграции
 
 - S3-compatible storage для аудио;
-- Sber Speech для ASR и инсайтов;
+- Yandex SpeechSense для ASR и речевой аналитики;
 - Deepgram для потока `disaproov_calls`;
 - OpenAI для итоговой оценки и классификации;
 - Postgres как основное хранилище.

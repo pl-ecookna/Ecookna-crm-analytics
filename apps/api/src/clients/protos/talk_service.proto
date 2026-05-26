@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package yandex.cloud.speechsense.v1;
+
+service TalkService {
+  rpc Upload (UploadTalkRequest) returns (UploadTalkResponse);
+}
+
+message UploadTalkRequest {
+  TalkMetadata metadata = 1;
+  AudioRequest audio = 2;
+  string talk_id = 3;
+}
+
+message TalkMetadata {
+  string connection_id = 1;
+  map<string, string> fields = 2;
+  repeated UserMetadata users = 3;
+}
+
+message UserMetadata {
+  string id = 1;
+  UserRole role = 2;
+  map<string, string> fields = 3;
+}
+
+enum UserRole {
+  USER_ROLE_UNSPECIFIED = 0;
+  USER_ROLE_OPERATOR = 1;
+  USER_ROLE_CLIENT = 2;
+  USER_ROLE_BOT = 3;
+}
+
+message AudioRequest {
+  AudioMetadata audio_metadata = 1;
+  AudioChunk audio_data = 2;
+}
+
+message AudioMetadata {
+  oneof audio_format {
+    RawAudio raw_audio = 1;
+    ContainerAudio container_audio = 2;
+  }
+}
+
+message RawAudio {
+  AudioEncoding audio_encoding = 1;
+  int64 sample_rate_hertz = 2;
+  int64 audio_channel_count = 3;
+}
+
+enum AudioEncoding {
+  AUDIO_ENCODING_UNSPECIFIED = 0;
+  AUDIO_ENCODING_LINEAR16_PCM = 1;
+}
+
+message ContainerAudio {
+  ContainerAudioType container_audio_type = 1;
+}
+
+enum ContainerAudioType {
+  CONTAINER_AUDIO_TYPE_UNSPECIFIED = 0;
+  CONTAINER_AUDIO_TYPE_WAV = 1;
+  CONTAINER_AUDIO_TYPE_OGG_OPUS = 2;
+  CONTAINER_AUDIO_TYPE_MP3 = 3;
+}
+
+message AudioChunk {
+  bytes data = 1;
+}
+
+message UploadTalkResponse {
+  string talk_id = 1;
+}

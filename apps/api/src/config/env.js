@@ -2,20 +2,6 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: process.env.ENV_FILE || '.env' });
 
-const required = [
-  // Prefer DB_MAIN_URL, but keep DB_URL as a backwards/short alias.
-  // If DB_DISAPPROVE_URL is not set, we default it to DB_MAIN_URL.
-  'DB_MAIN_URL',
-  'S3_ENDPOINT',
-  'S3_BUCKET',
-  'S3_ACCESS_KEY_ID',
-  'S3_SECRET_ACCESS_KEY',
-  'SBER_AUTH_KEY',
-  'SBER_SCOPE',
-  'DEEPGRAM_API_KEY',
-  'OPENAI_API_KEY',
-];
-
 const mainDbUrl = process.env.DB_MAIN_URL || process.env.DB_URL;
 if (mainDbUrl) {
   process.env.DB_MAIN_URL = mainDbUrl;
@@ -24,9 +10,9 @@ if (!process.env.DB_DISAPPROVE_URL) {
   process.env.DB_DISAPPROVE_URL = process.env.DB_MAIN_URL;
 }
 
-const missing = required.filter((k) => !process.env[k]);
-if (missing.length > 0) {
-  throw new Error(`Missing env vars: ${missing.join(', ')}`);
+const speechProvider = (process.env.SPEECH_PROVIDER || 'sber').trim().toLowerCase();
+if (!['sber', 'yandex'].includes(speechProvider)) {
+  throw new Error(`Unsupported SPEECH_PROVIDER: ${speechProvider}`);
 }
 
 const toInt = (v, d) => Number.isFinite(Number(v)) ? Number(v) : d;
@@ -38,6 +24,29 @@ const toCsv = (v, fallback) => {
     .filter(Boolean);
 };
 const pickAllowed = (values, allowed) => values.filter((v) => allowed.includes(v));
+
+const missing = [
+  !process.env.DB_MAIN_URL ? 'DB_MAIN_URL' : null,
+  !process.env.S3_ENDPOINT ? 'S3_ENDPOINT' : null,
+  !process.env.S3_BUCKET ? 'S3_BUCKET' : null,
+  !process.env.S3_ACCESS_KEY_ID ? 'S3_ACCESS_KEY_ID' : null,
+  !process.env.S3_SECRET_ACCESS_KEY ? 'S3_SECRET_ACCESS_KEY' : null,
+  !process.env.DEEPGRAM_API_KEY ? 'DEEPGRAM_API_KEY' : null,
+  !process.env.OPENAI_API_KEY ? 'OPENAI_API_KEY' : null,
+  speechProvider === 'sber' && !process.env.SBER_AUTH_KEY ? 'SBER_AUTH_KEY' : null,
+  speechProvider === 'sber' && !process.env.SBER_SCOPE ? 'SBER_SCOPE' : null,
+  speechProvider === 'yandex' && !process.env.YANDEX_ORGANIZATION_ID ? 'YANDEX_ORGANIZATION_ID' : null,
+  speechProvider === 'yandex' && !process.env.YANDEX_SPEECHSENSE_SPACE_ID ? 'YANDEX_SPEECHSENSE_SPACE_ID' : null,
+  speechProvider === 'yandex' && !process.env.YANDEX_SPEECHSENSE_CONNECTION_ID ? 'YANDEX_SPEECHSENSE_CONNECTION_ID' : null,
+  speechProvider === 'yandex' && !process.env.YANDEX_SPEECHSENSE_PROJECT_ID ? 'YANDEX_SPEECHSENSE_PROJECT_ID' : null,
+  speechProvider === 'yandex' && !process.env.YANDEX_SPEECHSENSE_API_KEY && !process.env.YANDEX_SPEECHSENSE_IAM_TOKEN
+    ? 'YANDEX_SPEECHSENSE_API_KEY or YANDEX_SPEECHSENSE_IAM_TOKEN'
+    : null,
+].filter(Boolean);
+
+if (missing.length > 0) {
+  throw new Error(`Missing env vars: ${missing.join(', ')}`);
+}
 
 export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -51,6 +60,7 @@ export const env = {
   mainBatchLimit: toInt(process.env.MAIN_BATCH_LIMIT, 150),
   disapproveBatchLimit: toInt(process.env.DISAPPROVE_BATCH_LIMIT, 200),
   minDurationSeconds: toInt(process.env.MIN_CALL_DURATION_SECONDS, 60),
+  speechProvider,
 
   db: {
     mainUrl: process.env.DB_MAIN_URL,
@@ -84,6 +94,23 @@ export const env = {
     pollTimeoutMs: toInt(process.env.SBER_POLL_TIMEOUT_MS, 180000),
   },
 
+  yandex: {
+    apiKey: process.env.YANDEX_SPEECHSENSE_API_KEY || '',
+    iamToken: process.env.YANDEX_SPEECHSENSE_IAM_TOKEN || '',
+    organizationId: process.env.YANDEX_ORGANIZATION_ID,
+    spaceId: process.env.YANDEX_SPEECHSENSE_SPACE_ID,
+    connectionId: process.env.YANDEX_SPEECHSENSE_CONNECTION_ID,
+    projectId: process.env.YANDEX_SPEECHSENSE_PROJECT_ID,
+    resultsMask: process.env.YANDEX_RESULTS_MASK
+      || 'transcription,speechStatistics,silenceStatistics,interruptsStatistics,conversationStatistics,talkState',
+    audioContainer: process.env.YANDEX_AUDIO_CONTAINER || 'mp3',
+    operatorChannel: toInt(process.env.YANDEX_OPERATOR_CHANNEL, 0),
+    customerChannel: toInt(process.env.YANDEX_CUSTOMER_CHANNEL, 1),
+    pollIntervalMs: toInt(process.env.YANDEX_POLL_INTERVAL_MS, 5000),
+    pollTimeoutMs: toInt(process.env.YANDEX_POLL_TIMEOUT_MS, 300000),
+    useCallIdAsTalkId: String(process.env.YANDEX_USE_CALL_ID_AS_TALK_ID || 'false').toLowerCase() === 'true',
+  },
+
   deepgram: {
     apiKey: process.env.DEEPGRAM_API_KEY,
     url: process.env.DEEPGRAM_URL || 'https://api.deepgram.com/v1/listen',
@@ -93,5 +120,6 @@ export const env = {
     apiKey: process.env.OPENAI_API_KEY,
     model: process.env.OPENAI_MODEL || 'gpt-4o',
     url: process.env.OPENAI_URL || 'https://api.openai.com/v1/chat/completions',
+    allowPartialOnQuotaFailure: String(process.env.OPENAI_ALLOW_PARTIAL_ON_QUOTA_FAILURE || 'false').toLowerCase() === 'true',
   },
 };

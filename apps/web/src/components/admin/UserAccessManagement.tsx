@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -132,11 +132,7 @@ export const UserAccessManagement = () => {
   const watchedPassword = watch('password') || '';
   const isEditingCurrentUser = editingUser?.id === currentUser?.id;
 
-  useEffect(() => {
-    void fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const data = await api.getUsers();
@@ -150,7 +146,11 @@ export const UserAccessManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void fetchUsers();
+  }, [fetchUsers]);
 
   const openCreateDialog = () => {
     setEditingUser(null);

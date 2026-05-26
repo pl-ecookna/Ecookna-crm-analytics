@@ -13,9 +13,12 @@
 Критичные:
 - `DB_MAIN_URL`
 - `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`
-- `SBER_AUTH_KEY`, `SBER_SCOPE`
-- `SBER_MODEL` (рекомендуется `callcenter`)
-- `SBER_INSIGHT_MODELS` (рекомендуется `csi,call_features`)
+- `SPEECH_PROVIDER=yandex`
+- `YANDEX_SPEECHSENSE_API_KEY` или `YANDEX_SPEECHSENSE_IAM_TOKEN`
+- `YANDEX_ORGANIZATION_ID`
+- `YANDEX_SPEECHSENSE_SPACE_ID`
+- `YANDEX_SPEECHSENSE_CONNECTION_ID`
+- `YANDEX_SPEECHSENSE_PROJECT_ID`
 - `DEEPGRAM_API_KEY`
 - `OPENAI_API_KEY`
 
@@ -39,6 +42,7 @@
 Перед первым запуском убедиться, что:
 - в основной БД уже созданы `crm_analytics` и `prompts`
 - в базе `disaproov_calls` уже созданы служебные retry-колонки
+- в SpeechSense уже созданы `space`, `connection` и `project` для выбранной организации
 
 Если нужна полная пересборка пустой среды:
 1. выполнить `sql/0004_internal_postgres_schema.sql`

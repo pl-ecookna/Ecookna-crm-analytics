@@ -51,7 +51,6 @@
 - `quality_score`
 - `compliance_score`
 - `conflict_risk_score`
-- `csi_score`
 
 ### 3.3 Качественные поля
 - `call_success`
@@ -92,8 +91,11 @@
 
 Важно: если `insight_result.call_features` отсутствует, блок «Речевые метрики» в UI отображается как «нет данных».
 
-## 5) Эмоциональные метрики (из колонок таблицы)
+## 5) Устаревшие поля
 
+Следующие колонки могут присутствовать в старых записях, но текущий UI их больше не показывает:
+
+- `csi_score`
 - `operator_emotion_positive`
 - `operator_emotion_neutral`
 - `operator_emotion_negative`
@@ -111,7 +113,7 @@
 
 ## 7) Вывод для режима "только callcenter"
 
-Если использовать только `model=callcenter` и полностью отключить `insight_models`:
+Если использовать только `call_features` и не запрашивать `csi`:
 
 1. **Сохранится**:
 - базовая транскрипция (если модель вернула текст)
@@ -119,16 +121,18 @@
 - дашбордовые KPI на `overall_score/call_success`
 
 2. **Потеряется/станет null**:
-- `csi_score` (если не запрашивать `csi` insight)
-- почти весь блок речевых метрик из `insight_result.call_features`
-- часть эмоциональных агрегатов, если они завязаны на insight
+- `csi_score`
+- все эмоциональные поля оператора и клиента
 
-3. Практический компромисс для текущего UI:
-- `SBER_MODEL=callcenter`
-- `SBER_INSIGHT_MODELS=csi,call_features`
-- не использовать `is_solved` (вызывает `insight error` в текущем окружении)
+3. **Останется**:
+- речевые метрики из `insight_result.call_features`
+- статистика речи, тишины и перебиваний
 
-Именно такой режим позволяет сохранить основную визуализацию метрик во фронтенде.
+Практический компромисс для текущего UI:
+- `SPEECH_PROVIDER=yandex`
+- `YANDEX_RESULTS_MASK=transcription,speechStatistics,silenceStatistics,interruptsStatistics,conversationStatistics,talkState`
+
+Именно такой режим позволяет сохранить основную визуализацию метрик во фронтенде без CSI и эмоций.
 
 ## 8) Рекомендации по метрикам после тестовых прогонов
 

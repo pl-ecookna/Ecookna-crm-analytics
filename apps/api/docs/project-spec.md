@@ -1,13 +1,13 @@
 # Проектная документация: crm-analitics-back
 
-Дата актуализации: 2026-04-28
+Дата актуализации: 2026-05-26
 
 ## 1. Назначение сервиса
 
 `crm-analitics-back` заменяет n8n-процессы и реализует 2 независимых потока обработки звонков:
 
 1. `crm_analytics` (основной поток):
-`Webhook -> S3 -> Postgres -> Sber ASR -> OpenAI LLM -> Postgres`
+`Webhook -> S3 -> Postgres -> Yandex SpeechSense -> OpenAI LLM -> Postgres`
 2. `disaproov_calls` (поток отказов):
 `Webhook -> S3 -> Postgres -> Deepgram -> OpenAI LLM -> Postgres`
 
@@ -36,12 +36,10 @@
 - claim пачки через `FOR UPDATE SKIP LOCKED`
 - обновление статусов `new/processing/completed/failed`
 
-4. **Sber Speech (ASR)**
-- `POST /api/v2/oauth` (получение access token)
-- `POST /rest/v1/data:upload` (загрузка аудио)
-- `POST /rest/v1/speech:async_recognize` (запуск асинхронного распознавания)
-- `GET /rest/v1/task:get?id=...` (poll статуса задачи)
-- `GET /rest/v1/data:download?response_file_id=...` (получение результата)
+4. **Yandex SpeechSense**
+- gRPC `TalkService.Upload` (загрузка аудио и метаданных)
+- REST `POST /speechsense/v1/talks/get` (poll и получение результатов)
+- результаты используются для транскрипции, статистики речи, тишины и перебиваний
 
 5. **Deepgram**
 - `POST /v1/listen` c `url` аудиофайла
@@ -71,7 +69,7 @@
 
 1. Claim `new` записей через `FOR UPDATE SKIP LOCKED`.
 2. Скачивание аудио из S3.
-3. Распознавание в Sber.
+3. Распознавание в Yandex SpeechSense.
 4. Построение транскрипции.
 5. Оценка звонка в OpenAI по промпту `prompts.prompt_key='salute_crm'`.
 6. Запись результата в `crm_analytics`:
@@ -79,6 +77,8 @@
 - `transkription`
 - метрики и итоговые оценки
 - `file_status=completed`
+
+Если OpenAI недоступен по quota/network и включен `OPENAI_ALLOW_PARTIAL_ON_QUOTA_FAILURE=true`, основной поток сохраняет speech/transcript-часть и завершает запись без LLM-оценки. Такой звонок можно позже добить из интерфейса через админское действие `POST /api/crm/calls/:id/reprocess-llm`, которое повторно запускает только LLM-шаг по уже сохраненной транскрипции.
 
 При ошибках:
 - автоповторы (до `RETRY_MAX_ATTEMPTS`)
@@ -96,22 +96,25 @@
 - аналогичный retry/backoff
 - затем `failed`
 
-## 4. Текущая специфика Sber ASR (важно)
+## 4. Текущая специфика SpeechSense (важно)
 
 Проверено в боевых тестах:
 
-1. Базовая модель для колл-центра:
-- `SBER_MODEL=callcenter`
+1. Основной режим теперь использует `SPEECH_PROVIDER=yandex`.
 
-2. Insight-модели:
-- безопасный набор: `csi,call_features`
+2. Для UI сохраняются речевые метрики:
+- `dialog_agent_speech_percentage`
+- `dialog_customer_speech_percentage`
+- `dialog_silence_length_percentage`
+- `agent_speech_speed_words_all_call_mean`
+- `customer_speech_speed_words_all_call_mean`
+- `dialog_interruptions_count`
 
-3. Настройка по умолчанию в коде:
-- `SBER_INSIGHT_MODELS=csi,call_features`
+3. `csi_score` и эмоциональные метрики больше не используются в интерфейсе.
 
-4. Формат ответа Sber может отличаться:
-- для части сценариев данные приходят как массив в корне;
-- парсер транскрипции учитывает оба формата (`root[]` и `result[]`).
+4. Парсер транскрипции ожидает `transcription.phrases` и строит стенограмму по `channelNumber` + `startTimeMs`.
+
+5. Для звонков с сохраненной speech-частью, но без финального LLM-результата, в UI доступна админская кнопка повторного запуска LLM. Она не трогает speech-provider часть и только дописывает итоговые LLM-поля в `crm_analytics`.
 
 ## 5. Cron и режим отладки
 
@@ -123,9 +126,9 @@
 
 Это сделано, чтобы в период отладки сервис не обрабатывал массово продовые `new` записи.
 
-## 6. TLS/сертификаты для Sber
+## 6. TLS/сертификаты
 
-Для корректной работы TLS со стороны Sber в Docker-образ добавлен корневой сертификат:
+Для корректной работы старого Sber fallback-режима в Docker-образ добавлен корневой сертификат:
 - `certs/russiantrustedca.pem`
 
 В Dockerfile:
@@ -143,8 +146,12 @@
 - `S3_BUCKET`
 - `S3_ACCESS_KEY_ID`
 - `S3_SECRET_ACCESS_KEY`
-- `SBER_AUTH_KEY`
-- `SBER_SCOPE`
+- `SPEECH_PROVIDER`
+- `YANDEX_SPEECHSENSE_API_KEY` или `YANDEX_SPEECHSENSE_IAM_TOKEN`
+- `YANDEX_ORGANIZATION_ID`
+- `YANDEX_SPEECHSENSE_SPACE_ID`
+- `YANDEX_SPEECHSENSE_CONNECTION_ID`
+- `YANDEX_SPEECHSENSE_PROJECT_ID`
 - `DEEPGRAM_API_KEY`
 - `OPENAI_API_KEY`
 
@@ -160,10 +167,20 @@
 - `DISAPPROVE_BATCH_LIMIT=200`
 - `MIN_CALL_DURATION_SECONDS=60`
 
-### 7.3 Sber ASR
+### 7.3 SpeechSense
+
+- `SPEECH_PROVIDER=yandex`
+- `YANDEX_RESULTS_MASK=transcription,speechStatistics,silenceStatistics,interruptsStatistics,conversationStatistics,talkState`
+- `YANDEX_AUDIO_CONTAINER=mp3`
+- `YANDEX_OPERATOR_CHANNEL=0`
+- `YANDEX_CUSTOMER_CHANNEL=1`
+- `YANDEX_POLL_INTERVAL_MS=5000`
+- `YANDEX_POLL_TIMEOUT_MS=300000`
+
+### 7.4 Legacy Sber fallback
 
 - `SBER_MODEL=callcenter`
-- `SBER_INSIGHT_MODELS=csi,call_features`
+- `SBER_INSIGHT_MODELS=call_features`
 - `SBER_POLL_INTERVAL_MS=2500`
 - `SBER_POLL_TIMEOUT_MS=180000`
 
@@ -196,7 +213,7 @@
 
 Рекомендуется дополнительно вынести:
 - счетчики `new/processing/completed/failed`
-- latency Sber/Deepgram/OpenAI
+- latency SpeechSense/Deepgram/OpenAI
 - retry metrics
 
 ## 10. Практические примечания для отладки

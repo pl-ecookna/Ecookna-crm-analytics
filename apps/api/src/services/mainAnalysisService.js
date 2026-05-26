@@ -1,17 +1,23 @@
 import { env } from '../config/env.js';
-import { sberTranscribe } from '../clients/sberClient.js';
+import { transcribeSpeechAudio } from '../clients/speechClient.js';
 import { openAiJsonCompletion } from '../clients/openaiClient.js';
 import { downloadFromS3 } from '../clients/s3Client.js';
-import { claimCrmCalls, getPromptText, updateCrmById } from '../db/mainDb.js';
-import { buildTranscriptFromSber, extractSberCallFeatures } from './transcriptBuilder.js';
+import {
+  claimCrmCalls,
+  getCrmCallByCallId,
+  getCrmCallById,
+  getPromptText,
+  updateCrmById,
+} from '../db/mainDb.js';
+import { buildTranscriptFromSpeechAnalysis, normalizeSpeechAnalysisResult } from './transcriptBuilder.js';
 import { calcBackoffMs } from '../utils/time.js';
 
-const markCompleted = async ({ row, sberJson, transcript, llm, openAiRaw }) => {
-  const features = extractSberCallFeatures(sberJson);
+export const markCompleted = async ({ row, speechAnalysis, transcript, llm, openAiRaw }) => {
+  const features = speechAnalysis?.insight_result?.call_features || {};
 
   await updateCrmById(row.id, {
     openai_full_json: openAiRaw || null,
-    transkription_full_json: sberJson,
+    transkription_full_json: speechAnalysis,
     transkription: transcript,
     file_status: 'completed',
     analyzed_at: new Date().toISOString(),
@@ -48,16 +54,23 @@ const markCompleted = async ({ row, sberJson, transcript, llm, openAiRaw }) => {
     transfer_quality: llm.transfer_quality ?? null,
     transfer_comment: llm.transfer_comment ?? null,
 
-    csi_score: features.csi_score,
-    dialog_agent_speech_percentage: features.dialog_agent_speech_percentage,
-    dialog_customer_speech_percentage: features.dialog_customer_speech_percentage,
-    dialog_silence_length_percentage: features.dialog_silence_length_percentage,
-    agent_speech_speed_words_all_call_mean: features.agent_speech_speed_words_all_call_mean,
-    customer_emo_score_mean: features.customer_emo_score_mean,
-    customer_emo_score_weighted_by_speech_length_mean: features.customer_emo_score_weighted_by_speech_length_mean,
-    customer_emotion_neg_speech_time_percentage: features.customer_emotion_neg_speech_time_percentage,
-    customer_emotion_pos_speech_time_percentage: features.customer_emotion_pos_speech_time_percentage,
-    customer_emotion_pos_utt_percentage: features.customer_emotion_pos_utt_percentage,
+    csi_score: null,
+    dialog_agent_speech_percentage: features.dialog_agent_speech_percentage ?? null,
+    dialog_customer_speech_percentage: features.dialog_customer_speech_percentage ?? null,
+    dialog_silence_length_percentage: features.dialog_silence_length_percentage ?? null,
+    agent_speech_speed_words_all_call_mean: features.agent_speech_speed_words_all_call_mean ?? null,
+    customer_emo_score_mean: null,
+    customer_emo_score_weighted_by_speech_length_mean: null,
+    customer_emotion_neg_speech_time_percentage: null,
+    customer_emotion_pos_speech_time_percentage: null,
+    customer_emotion_pos_utt_percentage: null,
+    operator_emotion_positive: null,
+    operator_emotion_neutral: null,
+    operator_emotion_negative: null,
+    client_emotion_positive: null,
+    client_emotion_neutral: null,
+    client_emotion_negative: null,
+    emotion_stress_index: null,
 
     retry_count: row.retry_count || 0,
     next_retry_at: null,
@@ -89,28 +102,197 @@ const markFailedOrRetry = async ({ row, errorText }) => {
   await updateCrmById(row.id, payload);
 };
 
+const isOpenAiQuotaFailure = (error) => {
+  const status = Number(error?.status || 0);
+  const code = String(error?.details?.error?.code || '');
+  return status === 429 && code === 'insufficient_quota';
+};
+
+const getStoredSpeechAnalysis = (row) => {
+  const stored = row?.transkription_full_json;
+  return stored && typeof stored === 'object' ? stored : null;
+};
+
+const getStoredSpeechRawResult = (speechAnalysis) => (
+  speechAnalysis?.provider_result
+  || speechAnalysis?.rawResult
+  || speechAnalysis
+);
+
+const getTranscriptFromStoredRow = (row) => {
+  if (typeof row?.transkription === 'string' && row.transkription.trim()) {
+    return row.transkription.trim();
+  }
+
+  const speechAnalysis = getStoredSpeechAnalysis(row);
+  if (!speechAnalysis) return '';
+
+  return buildTranscriptFromSpeechAnalysis({
+    provider: speechAnalysis.provider || env.speechProvider,
+    rawResult: getStoredSpeechRawResult(speechAnalysis),
+    operatorName: row.user_name,
+    operatorChannel: env.yandex.operatorChannel,
+    customerChannel: env.yandex.customerChannel,
+  });
+};
+
+const runOpenAiAnalysis = async ({
+  row,
+  transcript,
+  allowPartialOnQuotaFailure = env.openai.allowPartialOnQuotaFailure,
+  getPrompt = getPromptText,
+  completeJson = openAiJsonCompletion,
+}) => {
+  const systemPrompt = await getPrompt('salute_crm');
+
+  try {
+    const llmRes = await completeJson({
+      systemPrompt: systemPrompt || 'Верни только JSON с оценкой звонка.',
+      userPrompt: `Информация о звонке:\nОператор: ${row.user_name}\nОтдел: ${row.department}\nБренд: ${row.brand}\nТип: ${row.call_type}\n\nТранскрипция:\n${transcript}`,
+      returnRaw: true,
+    });
+
+    return { llmParsed: llmRes.parsed, openAiRaw: llmRes.raw };
+  } catch (error) {
+    if (!(allowPartialOnQuotaFailure && isOpenAiQuotaFailure(error))) {
+      throw error;
+    }
+
+    return {
+      llmParsed: {},
+      openAiRaw: {
+        error: {
+          status: error.status || null,
+          message: error.message || 'OpenAI quota failure',
+          details: error.details || null,
+        },
+      },
+    };
+  }
+};
+
+const finalizeCompletedCall = async ({
+  row,
+  speechAnalysis,
+  transcript,
+  llmParsed,
+  openAiRaw,
+  saveResult = markCompleted,
+}) => {
+  await saveResult({ row, speechAnalysis, transcript, llm: llmParsed, openAiRaw });
+  return { status: 'completed', transcript, speechAnalysis };
+};
+
+export const processMainRow = async (row) => {
+  try {
+    const audio = await downloadFromS3(row.file_name);
+    const speechResult = await transcribeSpeechAudio(audio, {
+      callId: row.call_id,
+      callDatetime: row.call_datetime,
+      operatorName: row.user_name,
+      operatorId: row.user_id,
+      clientId: row.client_id,
+      clientPhone: row.client_phone,
+      department: row.department,
+      brand: row.brand,
+      callType: row.call_type,
+    });
+    const transcript = buildTranscriptFromSpeechAnalysis({
+      provider: speechResult.provider,
+      rawResult: speechResult.rawResult,
+      operatorName: row.user_name,
+      operatorChannel: env.yandex.operatorChannel,
+      customerChannel: env.yandex.customerChannel,
+    });
+    if (!transcript.trim()) {
+      throw new Error(`${speechResult.provider} returned empty transcript`);
+    }
+
+    const speechAnalysis = normalizeSpeechAnalysisResult({
+      provider: speechResult.provider,
+      rawResult: speechResult.rawResult,
+      operatorName: row.user_name,
+      operatorChannel: env.yandex.operatorChannel,
+      customerChannel: env.yandex.customerChannel,
+    });
+
+    const { llmParsed, openAiRaw } = await runOpenAiAnalysis({
+      row,
+      transcript,
+      allowPartialOnQuotaFailure: env.openai.allowPartialOnQuotaFailure,
+    });
+
+    await finalizeCompletedCall({ row, speechAnalysis, transcript, llmParsed, openAiRaw });
+    return { status: 'completed', transcript, speechAnalysis };
+  } catch (error) {
+    await markFailedOrRetry({ row, errorText: error?.message || String(error) });
+    throw error;
+  }
+};
+
+export const reprocessLlmForRow = async (row, deps = {}) => {
+  const speechAnalysis = getStoredSpeechAnalysis(row);
+  if (!speechAnalysis) {
+    throw new Error(`Speech analysis is missing for call ${row?.call_id || row?.id || 'unknown'}`);
+  }
+
+  const transcript = getTranscriptFromStoredRow(row);
+  if (!transcript.trim()) {
+    throw new Error(`Transcript is missing for call ${row?.call_id || row?.id || 'unknown'}`);
+  }
+
+  const { llmParsed, openAiRaw } = await runOpenAiAnalysis({
+    row,
+    transcript,
+    allowPartialOnQuotaFailure: false,
+    getPrompt: deps.getPrompt || getPromptText,
+    completeJson: deps.completeJson || openAiJsonCompletion,
+  });
+
+  return finalizeCompletedCall({
+    row,
+    speechAnalysis,
+    transcript,
+    llmParsed,
+    openAiRaw,
+    saveResult: deps.saveResult || markCompleted,
+  });
+};
+
+export const reprocessLlmOnlyById = async (id, deps = {}) => {
+  const row = await getCrmCallById(id);
+  if (!row) {
+    throw new Error(`Call not found: ${id}`);
+  }
+
+  await reprocessLlmForRow(row, deps);
+
+  return getCrmCallById(id);
+};
+
+export const processSingleCallById = async (callId) => {
+  const row = await getCrmCallByCallId(callId);
+  if (!row) {
+    throw new Error(`Call not found: ${callId}`);
+  }
+
+  await updateCrmById(row.id, {
+    file_status: 'processing',
+    processing_started_at: new Date().toISOString(),
+    last_error: null,
+  });
+
+  return processMainRow({ ...row, retry_count: row.retry_count || 0 });
+};
+
 export const processMainBatch = async () => {
   const rows = await claimCrmCalls(env.mainBatchLimit);
 
   for (const row of rows) {
     try {
-      const audio = await downloadFromS3(row.file_name);
-      const sberJson = await sberTranscribe(audio);
-      const transcript = buildTranscriptFromSber({ sberJson, operatorName: row.user_name });
-      if (!transcript.trim()) {
-        throw new Error('Sber returned empty transcript');
-      }
-
-      const systemPrompt = await getPromptText('salute_crm');
-      const llmRes = await openAiJsonCompletion({
-        systemPrompt: systemPrompt || 'Верни только JSON с оценкой звонка.',
-        userPrompt: `Информация о звонке:\nОператор: ${row.user_name}\nОтдел: ${row.department}\nБренд: ${row.brand}\nТип: ${row.call_type}\n\nТранскрипция:\n${transcript}`,
-        returnRaw: true,
-      });
-
-      await markCompleted({ row, sberJson, transcript, llm: llmRes.parsed, openAiRaw: llmRes.raw });
-    } catch (error) {
-      await markFailedOrRetry({ row, errorText: error?.message || String(error) });
+      await processMainRow(row);
+    } catch {
+      // Row-specific failure is already persisted inside processMainRow.
     }
   }
 

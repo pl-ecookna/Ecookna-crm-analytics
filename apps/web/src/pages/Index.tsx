@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Search, CheckCircle, XCircle, Loader2, FileText, Target, TrendingDown, Star, Clock, ChevronDown, ChevronUp, Trash2, Edit3, Check, X, Phone, MapPin, Package, Globe, MessageSquare } from "lucide-react";
+import { Search, CheckCircle, XCircle, Loader2, FileText, Target, TrendingDown, Star, Clock, ChevronDown, ChevronUp, Trash2, Edit3, Check, X, Phone, MapPin, Package, Globe, MessageSquare, RefreshCw } from "lucide-react";
 import { CrmCallCard } from "@/components/CrmCallCard";
 import { useToast } from "@/hooks/use-toast";
 import { createApiClient } from "@ecookna/api-client";
@@ -20,6 +20,7 @@ import type { CrmCallDetails, CrmCallListItem, CrmMetricsResponse } from "@ecook
 import TranscriptDisplay from "@/components/TranscriptDisplay";
 import { CallDetailsAccordion } from "@/components/CallDetailsAccordion";
 import { Header } from "@/components/Header";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const api = createApiClient(import.meta.env.VITE_API_BASE_URL || "");
 type CrmCallAnalysis = CrmCallListItem;
@@ -63,18 +64,19 @@ const Index = () => {
   const [crmMetricsLoading, setCrmMetricsLoading] = useState(false);
   
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const fetchCrmCount = async () => {
+  const fetchCrmCount = useCallback(async () => {
     try {
       const data = await api.getCalls({ page: 1, pageSize: 1 });
       setCrmTotalCount(data.total || 0);
     } catch (error) {
       console.error('Error fetching CRM count:', error);
     }
-  };
+  }, []);
 
   // Fetch CRM metrics data (independent of pagination and filters)
-  const fetchCrmMetrics = async () => {
+  const fetchCrmMetrics = useCallback(async () => {
     try {
       setCrmMetricsLoading(true);
       const data = await api.getMetrics();
@@ -89,27 +91,9 @@ const Index = () => {
     } finally {
       setCrmMetricsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchCrmCount();
-    fetchCrmMetrics();
-    fetchCrmAnalyses(1);
   }, []);
 
-  const handleCrmPageChange = (page: number) => {
-    setCrmCurrentPage(page);
-    fetchCrmAnalyses(page);
-  };
-
-  useEffect(() => {
-    if (crmCurrentPage !== 1) {
-      setCrmCurrentPage(1);
-      fetchCrmAnalyses(1);
-    }
-  }, [crmActiveFilter]);
-
-  const fetchCrmAnalyses = async (page = 1) => {
+  const fetchCrmAnalyses = useCallback(async (page = 1) => {
     try {
       setCrmLoading(true);
       const data = await api.getCalls({ page, pageSize: crmPageSize });
@@ -124,7 +108,25 @@ const Index = () => {
     } finally {
       setCrmLoading(false);
     }
+  }, [crmPageSize, toast]);
+
+  useEffect(() => {
+    void fetchCrmCount();
+    void fetchCrmMetrics();
+    void fetchCrmAnalyses(1);
+  }, [fetchCrmAnalyses, fetchCrmCount, fetchCrmMetrics]);
+
+  const handleCrmPageChange = (page: number) => {
+    setCrmCurrentPage(page);
+    fetchCrmAnalyses(page);
   };
+
+  useEffect(() => {
+    if (crmCurrentPage !== 1) {
+      setCrmCurrentPage(1);
+      void fetchCrmAnalyses(1);
+    }
+  }, [crmActiveFilter, crmCurrentPage, fetchCrmAnalyses]);
 
   const loadCallDetails = async (id: number | string) => {
     setCrmDetailsOpen(true);
@@ -181,6 +183,31 @@ const Index = () => {
     }
   };
 
+  const handleReprocessLlm = async () => {
+    if (!selectedCrmItem) return;
+
+    try {
+      setCrmUpdateLoading(true);
+      const updatedCall = await api.reprocessCallLlm(selectedCrmItem.id);
+      setSelectedCrmItem(updatedCall);
+      await fetchCrmAnalyses(crmCurrentPage);
+      await fetchCrmMetrics();
+      toast({
+        title: "LLM шаг завершен",
+        description: "Звонок повторно обработан по уже сохраненной транскрипции",
+      });
+    } catch (error) {
+      console.error('Error reprocessing LLM:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось запустить повторную LLM-обработку",
+        variant: "destructive"
+      });
+    } finally {
+      setCrmUpdateLoading(false);
+    }
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Дата не указана";
     const date = new Date(dateString);
@@ -221,6 +248,17 @@ const Index = () => {
         return status || 'Новый';
     }
   };
+
+  const hasOpenAiError = (openAiJson: unknown) => {
+    if (!openAiJson || typeof openAiJson !== 'object') return false;
+    return 'error' in openAiJson;
+  };
+
+  const canReprocessLlm = Boolean(
+    user?.role === 'admin'
+    && selectedCrmItem?.transkription_full_json
+    && (!selectedCrmItem.openai_full_json || hasOpenAiError(selectedCrmItem.openai_full_json)),
+  );
 
   const getCallSuccessBadgeClass = (callSuccess: string | null) => {
     if (callSuccess === 'Успешный') return "bg-success/10 text-success border-success/20";
@@ -556,12 +594,32 @@ const Index = () => {
             ) : selectedCrmItem ? (
               <>
                 <SheetHeader className="space-y-3 pr-10 text-left">
-                  <SheetTitle className="text-xl">
-                    Анализ звонка из CRM
-                  </SheetTitle>
-                  <SheetDescription>
-                    Детальная карточка звонка с метриками, стенограммой и признаками качества.
-                  </SheetDescription>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-3">
+                      <SheetTitle className="text-xl">
+                        Анализ звонка из CRM
+                      </SheetTitle>
+                      <SheetDescription>
+                        Детальная карточка звонка с метриками, стенограммой и признаками качества.
+                      </SheetDescription>
+                    </div>
+                    {canReprocessLlm ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleReprocessLlm}
+                        disabled={crmUpdateLoading}
+                        className="shrink-0 gap-2"
+                      >
+                        {crmUpdateLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
+                        Повторить LLM
+                      </Button>
+                    ) : null}
+                  </div>
                   <div className="flex flex-wrap items-center gap-2 pt-2">
                     <Badge variant={selectedCrmItem.call_type === 'входящий' ? 'default' : 'secondary'}>
                       {selectedCrmItem.call_type || 'Не указан'}

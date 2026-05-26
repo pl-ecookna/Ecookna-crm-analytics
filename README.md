@@ -14,7 +14,7 @@
 
 Поток системы:
 
-`CRM webhook -> S3 -> Postgres -> Sber Speech / Deepgram -> OpenAI -> Postgres -> web UI`
+`CRM webhook -> S3 -> Postgres -> Yandex SpeechSense / Deepgram -> OpenAI -> Postgres -> web UI`
 
 ## Быстрый старт
 

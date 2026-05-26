@@ -86,7 +86,7 @@ const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ transcript, opera
               text
             });
           }
-        } else if (line.length > 10 && !line.match(/^\d+[\.:]/)) {
+        } else if (line.length > 10 && !line.match(/^\d+[.:]/)) {
           // If it's a longer text without number prefix, treat as continuation or new message
           // Alternate between operator and client for better structure
           const role = messages.length % 2 === 0 ? 'Оператор' : 'Клиент';
