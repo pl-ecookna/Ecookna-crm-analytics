@@ -65,7 +65,12 @@ test('reprocesses only LLM using stored speech analysis and transcript', async (
     completeJson: async (payload) => {
       calls.push(payload);
       return {
-        parsed: { overall_score: 9, call_success: 'Успешный' },
+        parsed: {
+          overall_score: 9,
+          stages_score: 5,
+          quality_score: 4,
+          call_success: 'Успешный',
+        },
         raw: { id: 'completion-1' },
       };
     },
@@ -81,6 +86,8 @@ test('reprocesses only LLM using stored speech analysis and transcript', async (
   assert.match(calls[0].userPrompt, /Транскрипция:/);
   assert.equal(calls[1].row.id, 42);
   assert.equal(calls[1].llm.overall_score, 9);
+  assert.equal(calls[1].llm.stages_score, 5);
+  assert.equal(calls[1].llm.quality_score, 4);
   assert.equal(calls[1].speechAnalysis, storedTalk);
 });
 

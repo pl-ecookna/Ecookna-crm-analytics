@@ -134,8 +134,6 @@ export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick, onDelet
               {onReprocess ? (
                 <DropdownMenuItem
                   onSelect={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
                     void onReprocess(call.id);
                   }}
                   disabled={isReprocessing}

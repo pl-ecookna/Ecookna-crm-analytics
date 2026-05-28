@@ -158,6 +158,38 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
     return duration;
   };
 
+  const formatScoreValue = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return '—';
+    return String(value);
+  };
+
+  const formatBurnoutSigns = (value: unknown): string | null => {
+    if (value === null || value === undefined) return null;
+
+    if (Array.isArray(value)) {
+      const normalized = value
+        .map((item) => {
+          if (typeof item === 'string') return item.trim();
+          if (item === null || item === undefined) return '';
+          return String(item).trim();
+        })
+        .filter(Boolean)
+        .filter((item) => item !== 'Не выявлено' && item !== 'Не определено');
+
+      return normalized.length > 0 ? normalized.join(', ') : null;
+    }
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed || trimmed === 'Не выявлено' || trimmed === 'Не определено') {
+        return null;
+      }
+      return trimmed;
+    }
+
+    return null;
+  };
+
   const resolvedConversationDuration =
     call.conversation_duration_total || formatMinutes(call.conversation_duration_minutes);
 
@@ -418,7 +450,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             <div className="ml-auto flex items-center gap-2">
               <Star className="h-4 w-4 text-warning" />
               <span className={`text-sm font-medium ${getScoreColor(call.overall_score, 10)}`}>
-                {call.overall_score || 0}/10
+                {formatScoreValue(call.overall_score)}/10
               </span>
             </div>
           </div>
@@ -438,14 +470,16 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Оценка</span>
                     <span className={`text-2xl font-bold ${getScoreColor(call.overall_score, 10)}`}>
-                      {call.overall_score || 0}
+                      {formatScoreValue(call.overall_score)}
                     </span>
                   </div>
                   <Progress 
-                    value={((call.overall_score || 0) / 10) * 100} 
+                    value={((call.overall_score ?? 0) / 10) * 100} 
                     className="h-3"
                   />
-                  <span className="text-xs text-muted-foreground">Максимум: 10 баллов</span>
+                  <span className="text-xs text-muted-foreground">
+                    {call.overall_score === null || call.overall_score === undefined ? 'Не оценено' : 'Максимум: 10 баллов'}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -463,14 +497,16 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Оценка</span>
                     <span className={`text-2xl font-bold ${getScoreColor(call.stages_score, 6)}`}>
-                      {call.stages_score || 0}
+                      {formatScoreValue(call.stages_score)}
                     </span>
                   </div>
                   <Progress 
-                    value={((call.stages_score || 0) / 6) * 100} 
+                    value={((call.stages_score ?? 0) / 6) * 100} 
                     className="h-3"
                   />
-                  <span className="text-xs text-muted-foreground">Максимум: 6 баллов</span>
+                  <span className="text-xs text-muted-foreground">
+                    {call.stages_score === null || call.stages_score === undefined ? 'Не оценено' : 'Максимум: 6 баллов'}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -488,14 +524,16 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Оценка</span>
                     <span className={`text-2xl font-bold ${getScoreColor(call.quality_score, 4)}`}>
-                      {call.quality_score || 0}
+                      {formatScoreValue(call.quality_score)}
                     </span>
                   </div>
                   <Progress 
-                    value={((call.quality_score || 0) / 4) * 100} 
+                    value={((call.quality_score ?? 0) / 4) * 100} 
                     className="h-3"
                   />
-                  <span className="text-xs text-muted-foreground">Максимум: 4 балла</span>
+                  <span className="text-xs text-muted-foreground">
+                    {call.quality_score === null || call.quality_score === undefined ? 'Не оценено' : 'Максимум: 4 балла'}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -513,14 +551,16 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Оценка</span>
                     <span className={`text-2xl font-bold ${getScoreColor(call.compliance_score, 5)}`}>
-                      {call.compliance_score || 0}
+                      {formatScoreValue(call.compliance_score)}
                     </span>
                   </div>
                   <Progress 
-                    value={((call.compliance_score || 0) / 5) * 100} 
+                    value={((call.compliance_score ?? 0) / 5) * 100} 
                     className="h-3"
                   />
-                  <span className="text-xs text-muted-foreground">Максимум: 5 баллов</span>
+                  <span className="text-xs text-muted-foreground">
+                    {call.compliance_score === null || call.compliance_score === undefined ? 'Не оценено' : 'Максимум: 5 баллов'}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -538,15 +578,17 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Оценка</span>
                     <span className={`text-2xl font-bold ${getRiskColor(call.conflict_risk_score)}`}>
-                      {call.conflict_risk_score || 0}
+                      {formatScoreValue(call.conflict_risk_score)}
                     </span>
                   </div>
                   <Progress 
-                    value={((call.conflict_risk_score || 0) / 10) * 100} 
+                    value={((call.conflict_risk_score ?? 0) / 10) * 100} 
                     className="h-3"
                   />
                   <span className="text-xs text-muted-foreground">
-                    {getRiskLevel(call.conflict_risk_score)} (макс: 10)
+                    {call.conflict_risk_score === null || call.conflict_risk_score === undefined
+                      ? 'Не оценено'
+                      : `${getRiskLevel(call.conflict_risk_score)} (макс: 10)`}
                   </span>
                 </div>
               </CardContent>
@@ -608,14 +650,11 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                       ? (call.burnout_level < 0.3 ? 'Не выявлено' : call.burnout_level < 0.6 ? 'Легкие признаки' : 'Явные признаки')
                       : 'Не определен'}
                   </Badge>
-                  {call.burnout_signs && (
+                  {formatBurnoutSigns(call.burnout_signs) ? (
                     <p className="text-xs text-muted-foreground mt-2">
-                      {typeof call.burnout_signs === 'string' 
-                        ? call.burnout_signs 
-                        : JSON.stringify(call.burnout_signs)
-                      }
+                      {formatBurnoutSigns(call.burnout_signs)}
                     </p>
-                  )}
+                  ) : null}
                 </CardContent>
               </Card>
 
@@ -863,12 +902,13 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                 const agentPercent = (getCallFeature('dialog_agent_speech_percentage') || 0) * 100;
                 const customerPercent = (getCallFeature('dialog_customer_speech_percentage') || 0) * 100;
                 const silencePercent = (getCallFeature('dialog_silence_length_percentage') || 0) * 100;
-                const hasData = agentPercent > 0 || customerPercent > 0 || silencePercent > 0;
+                const pausePercent = Math.max(0, 100 - agentPercent - customerPercent - silencePercent);
+                const hasData = agentPercent > 0 || customerPercent > 0 || silencePercent > 0 || pausePercent > 0;
                 
                 return (
                   <div className={!hasData ? 'opacity-60' : ''}>
                     {/* Легенда с процентами */}
-                    <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded bg-primary"></div>
                         <span className="text-xs">Оператор: {agentPercent.toFixed(1)}%</span>
@@ -880,6 +920,10 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded bg-yellow-400"></div>
                         <span className="text-xs">Тишина: {silencePercent.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded bg-muted-foreground/40"></div>
+                        <span className="text-xs">Паузы: {pausePercent.toFixed(1)}%</span>
                       </div>
                     </div>
                     
@@ -896,6 +940,10 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                       <div 
                         className="bg-yellow-400 h-full transition-all" 
                         style={{width: `${silencePercent}%`}}
+                      />
+                      <div 
+                        className="bg-muted-foreground/40 h-full transition-all" 
+                        style={{width: `${pausePercent}%`}}
                       />
                     </div>
                   </div>

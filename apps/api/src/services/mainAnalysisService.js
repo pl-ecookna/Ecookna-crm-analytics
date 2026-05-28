@@ -49,6 +49,8 @@ export const markCompleted = async ({ row, speechAnalysis, transcript, llm, open
     conversation_stage_closing: llm.conversation_stage_closing ?? null,
     conversation_duration_total: llm.conversation_duration_total ?? null,
     conversation_duration_minutes: llm.conversation_duration_minutes ?? null,
+    stages_score: llm.stages_score ?? null,
+    quality_score: llm.quality_score ?? null,
     transfer_required: llm.transfer_required ?? null,
     transfer_done: llm.transfer_done ?? null,
     transfer_quality: llm.transfer_quality ?? null,
