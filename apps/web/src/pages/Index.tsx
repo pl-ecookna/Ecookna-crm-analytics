@@ -49,6 +49,7 @@ const Index = () => {
   const [crmEditedItem, setCrmEditedItem] = useState<CrmCallAnalysis | null>(null);
   const [crmDeleteLoading, setCrmDeleteLoading] = useState(false);
   const [crmUpdateLoading, setCrmUpdateLoading] = useState(false);
+  const [crmReprocessLoadingId, setCrmReprocessLoadingId] = useState<number | string | null>(null);
   
   // CRM Metrics state (independent of pagination)
   const [crmMetricsData, setCrmMetricsData] = useState<CrmMetricsResponse>({
@@ -180,6 +181,35 @@ const Index = () => {
         description: "Не удалось удалить звонок",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleReprocessCall = async (id: number | string) => {
+    try {
+      setCrmReprocessLoadingId(id);
+      const updatedCall = await api.reprocessCall(id);
+
+      if (selectedCrmItem?.id === id) {
+        setSelectedCrmItem(updatedCall);
+      }
+
+      await fetchCrmCount();
+      await fetchCrmMetrics();
+      await fetchCrmAnalyses(crmCurrentPage);
+
+      toast({
+        title: "Анализ запущен",
+        description: "Звонок отправлен на повторную обработку",
+      });
+    } catch (error) {
+      console.error('Error reprocessing call:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось перезапустить анализ звонка",
+        variant: "destructive"
+      });
+    } finally {
+      setCrmReprocessLoadingId(null);
     }
   };
 
@@ -524,6 +554,8 @@ const Index = () => {
                         }}
                         onClick={(id) => void loadCallDetails(id)}
                         onDelete={(id) => handleDeleteCall(id)}
+                        onReprocess={user?.role === 'admin' ? (id) => handleReprocessCall(id) : undefined}
+                        isReprocessing={crmReprocessLoadingId === analysis.id}
                        />
                     ))}
                   </div>

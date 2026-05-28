@@ -4,7 +4,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
-import { CheckCircle, Loader2, MoreVertical, Trash2, XCircle, Clock, Calendar, User, Building, Briefcase } from "lucide-react";
+import { CheckCircle, Loader2, MoreVertical, RefreshCw, Trash2, XCircle, Clock, Calendar, User, Building, Briefcase } from "lucide-react";
 
 interface CrmCallCardProps {
   call: {
@@ -23,6 +23,8 @@ interface CrmCallCardProps {
   };
   onClick: (id: number | string) => void;
   onDelete: (id: number | string) => Promise<void>;
+  onReprocess?: (id: number | string) => Promise<void>;
+  isReprocessing?: boolean;
 }
 
 // Утилитарные функции
@@ -95,7 +97,7 @@ const getFileStatusIcon = (status: string) => {
   }
 };
 
-export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick, onDelete }) => {
+export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick, onDelete, onReprocess, isReprocessing = false }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
@@ -129,6 +131,24 @@ export const CrmCallCard: React.FC<CrmCallCardProps> = ({ call, onClick, onDelet
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              {onReprocess ? (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    void onReprocess(call.id);
+                  }}
+                  disabled={isReprocessing}
+                >
+                  {isReprocessing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  Перезапустить анализ
+                </DropdownMenuItem>
+              ) : null}
+              {onReprocess ? <div className="my-1 h-px bg-border" /> : null}
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onSelect={(e) => {

@@ -4,7 +4,7 @@ import { env } from '../config/env.js';
 import { deleteFromS3 } from '../clients/s3Client.js';
 import { log } from '../utils/logger.js';
 import { requireRole } from '../middleware/auth.js';
-import { reprocessLlmOnlyById } from '../services/mainAnalysisService.js';
+import { reprocessCallById, reprocessLlmOnlyById } from '../services/mainAnalysisService.js';
 
 const router = express.Router();
 
@@ -231,6 +231,27 @@ router.post('/crm/calls/:id/reprocess-llm', requireRole('admin'), async (req, re
   } catch (error) {
     return res.status(500).json({
       error: 'Failed to reprocess LLM for CRM call',
+      detail: error.message,
+    });
+  }
+});
+
+router.post('/crm/calls/:id/reprocess', requireRole('admin'), async (req, res) => {
+  try {
+    const id = Number.parseInt(String(req.params.id ?? ''), 10);
+    if (!Number.isFinite(id) || id <= 0) {
+      return res.status(400).json({ error: 'Invalid id' });
+    }
+
+    const updatedRow = await reprocessCallById(id);
+    if (!updatedRow) {
+      return res.status(404).json({ error: 'Call not found' });
+    }
+
+    return res.json(updatedRow);
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Failed to reprocess CRM call',
       detail: error.message,
     });
   }

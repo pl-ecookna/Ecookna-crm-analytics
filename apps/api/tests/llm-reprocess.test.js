@@ -15,7 +15,7 @@ process.env.YANDEX_SPEECHSENSE_CONNECTION_ID = process.env.YANDEX_SPEECHSENSE_CO
 process.env.YANDEX_SPEECHSENSE_PROJECT_ID = process.env.YANDEX_SPEECHSENSE_PROJECT_ID || 'project';
 process.env.YANDEX_SPEECHSENSE_API_KEY = process.env.YANDEX_SPEECHSENSE_API_KEY || 'api-key';
 
-const { reprocessLlmForRow } = await import('../src/services/mainAnalysisService.js');
+const { reprocessCallById, reprocessLlmForRow } = await import('../src/services/mainAnalysisService.js');
 
 const storedTalk = {
   provider: 'yandex',
@@ -82,4 +82,29 @@ test('reprocesses only LLM using stored speech analysis and transcript', async (
   assert.equal(calls[1].row.id, 42);
   assert.equal(calls[1].llm.overall_score, 9);
   assert.equal(calls[1].speechAnalysis, storedTalk);
+});
+
+test('reprocessCallById uses LLM-only path when speech analysis is already stored', async () => {
+  const row = {
+    id: 7,
+    call_id: 'call-7',
+    transkription: 'готовая стенограмма',
+    transkription_full_json: storedTalk,
+  };
+
+  const calls = [];
+  const result = await reprocessCallById(7, {
+    getCallById: async () => row,
+    reprocessLlmForRow: async (selectedRow) => {
+      calls.push(selectedRow);
+      return { status: 'completed' };
+    },
+    processSingleCallById: async () => {
+      throw new Error('full path must not be called');
+    },
+  });
+
+  assert.equal(result, row);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].id, 7);
 });

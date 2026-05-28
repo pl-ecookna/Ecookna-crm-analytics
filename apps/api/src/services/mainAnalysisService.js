@@ -270,6 +270,31 @@ export const reprocessLlmOnlyById = async (id, deps = {}) => {
   return getCrmCallById(id);
 };
 
+export const reprocessCallById = async (id, deps = {}) => {
+  const getCallById = deps.getCallById || getCrmCallById;
+  const runLlm = deps.reprocessLlmForRow || reprocessLlmForRow;
+  const runFull = deps.processSingleCallById || processSingleCallById;
+
+  const row = await getCallById(id);
+  if (!row) {
+    throw new Error(`Call not found: ${id}`);
+  }
+
+  const hasSpeechAnalysis = Boolean(row.transkription_full_json && typeof row.transkription_full_json === 'object');
+
+  if (hasSpeechAnalysis) {
+    await runLlm(row, deps);
+    return getCallById(id);
+  }
+
+  if (!row.call_id) {
+    throw new Error(`Call id is missing for row ${row.id}`);
+  }
+
+  await runFull(row.call_id, deps);
+  return getCallById(id);
+};
+
 export const processSingleCallById = async (callId) => {
   const row = await getCrmCallByCallId(callId);
   if (!row) {
