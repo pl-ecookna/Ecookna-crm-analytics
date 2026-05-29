@@ -25,6 +25,8 @@ import {
   Cpu,
   Waves,
   Radar,
+  Volume2,
+  ExternalLink,
 } from "lucide-react";
 import TranscriptDisplay from "./TranscriptDisplay";
 import type { CrmCallDetails, SpeechAnalysisPayload } from "@ecookna/shared-types";
@@ -442,6 +444,12 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
     return String(value);
   };
 
+  const providerBadgeClass = isSberProvider
+    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+    : isYandexProvider
+      ? 'bg-sky-50 text-sky-700 border-sky-200'
+      : 'bg-muted/10 text-muted-foreground border-muted/20';
+
   const formatBurnoutSigns = (value: unknown): string | null => {
     if (value === null || value === undefined) return null;
 
@@ -471,6 +479,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
 
   const resolvedConversationDuration =
     call.conversation_duration_total || formatMinutes(call.conversation_duration_minutes);
+  const callAudioUrl = typeof call.file_url === 'string' && call.file_url.trim() ? call.file_url.trim() : null;
 
   const { completed, total } = calculateCriteriaScore();
 
@@ -588,6 +597,9 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             <Target className="h-5 w-5 text-primary" />
             <span className="text-base font-medium">Критерии диалога</span>
             <div className="ml-auto flex items-center gap-2">
+              <Badge variant="outline" className={providerBadgeClass}>
+                {getProviderLabel(speechProvider)}
+              </Badge>
               <span className={`text-sm font-medium ${getScoreColor(completed, total)}`}>
                 {completed}/{total}
               </span>
@@ -727,7 +739,7 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             <Award className="h-5 w-5 text-primary" />
             <span className="text-base font-medium">Оценки и баллы</span>
             <div className="ml-auto flex items-center gap-2">
-              <Badge variant="secondary" className="font-medium">
+              <Badge variant="outline" className={`font-medium ${providerBadgeClass}`}>
                 {getProviderLabel(speechProvider)}
               </Badge>
               <Star className="h-4 w-4 text-warning" />
@@ -887,6 +899,9 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             <TrendingUp className="h-5 w-5 text-primary" />
             <span className="text-base font-medium">Качественные показатели</span>
             <div className="ml-auto flex items-center gap-2">
+              <Badge variant="outline" className={providerBadgeClass}>
+                {getProviderLabel(speechProvider)}
+              </Badge>
               <Badge className={
                 call.call_success === 'Успешный' ? "bg-success/10 text-success border-success/20" : 
                 call.call_success === 'Средний результат' ? "bg-warning/10 text-warning border-warning/20" :
@@ -1439,6 +1454,51 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               ) : (
                 <p className="text-muted-foreground text-center py-8">
                   Стенограмма недоступна
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* 7. Прослушивание звонка */}
+      <AccordionItem value="audio-player" className="border rounded-lg">
+        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <div className="flex items-center gap-3 w-full">
+            <Volume2 className="h-5 w-5 text-primary" />
+            <span className="text-base font-medium">Прослушивание звонка</span>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-4 pb-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Аудиозапись звонка</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {callAudioUrl ? (
+                <>
+                  <audio controls preload="metadata" className="w-full">
+                    <source src={callAudioUrl} />
+                    Ваш браузер не поддерживает воспроизведение аудио.
+                  </audio>
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="truncate text-muted-foreground">
+                      {String(call.file_name || 'Файл звонка')}
+                    </span>
+                    <a
+                      href={callAudioUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Открыть файл
+                    </a>
+                  </div>
+                </>
+              ) : (
+                <p className="text-center py-8 text-muted-foreground">
+                  Аудиозапись недоступна
                 </p>
               )}
             </CardContent>

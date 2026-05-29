@@ -8,6 +8,19 @@ export const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const speechProvider = String(import.meta.env.VITE_SPEECH_PROVIDER || 'yandex').trim().toLowerCase();
+
+  const getProviderLabel = (value: string): string => {
+    switch (value) {
+      case 'sber':
+        return 'SaluteSpeech';
+      case 'yandex':
+        return 'Yandex SpeechSense';
+      default:
+        return value || '—';
+    }
+  };
+
   const handleAdminPanel = () => {
     navigate('/admin');
   };
@@ -44,6 +57,9 @@ export const Header = () => {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
+          <Badge variant="outline" className="font-medium">
+            {getProviderLabel(speechProvider)}
+          </Badge>
           {user ? (
             <div className="hidden items-center gap-2 rounded-full border bg-background/80 px-3 py-1.5 text-sm md:flex">
               <span className="font-medium">{user.name}</span>
