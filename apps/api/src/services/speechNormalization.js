@@ -307,6 +307,7 @@ export const normalizeSpeechAnalysisResult = ({
     });
 
     return {
+      schema_version: 1,
       provider,
       provider_result: rawResult,
       insight_result: {
@@ -316,6 +317,7 @@ export const normalizeSpeechAnalysisResult = ({
   }
 
   return {
+    schema_version: 1,
     provider,
     provider_result: rawResult,
     insight_result: {

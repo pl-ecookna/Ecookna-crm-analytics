@@ -106,8 +106,9 @@ export const env = {
     audioContainer: process.env.YANDEX_AUDIO_CONTAINER || 'mp3',
     operatorChannel: toInt(process.env.YANDEX_OPERATOR_CHANNEL, 0),
     customerChannel: toInt(process.env.YANDEX_CUSTOMER_CHANNEL, 1),
+    uploadTimeoutMs: toInt(process.env.YANDEX_UPLOAD_TIMEOUT_MS, 60000),
     pollIntervalMs: toInt(process.env.YANDEX_POLL_INTERVAL_MS, 5000),
-    pollTimeoutMs: toInt(process.env.YANDEX_POLL_TIMEOUT_MS, 300000),
+    pollTimeoutMs: toInt(process.env.YANDEX_POLL_TIMEOUT_MS, 900000),
     useCallIdAsTalkId: String(process.env.YANDEX_USE_CALL_ID_AS_TALK_ID || 'false').toLowerCase() === 'true',
   },
 

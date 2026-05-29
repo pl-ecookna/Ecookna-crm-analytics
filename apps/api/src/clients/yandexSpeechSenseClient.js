@@ -1,5 +1,4 @@
 import path from 'node:path';
-import https from 'node:https';
 import { fileURLToPath } from 'node:url';
 import grpc from '@grpc/grpc-js';
 import protoLoader from '@grpc/proto-loader';
@@ -25,7 +24,9 @@ if (!TalkService) {
   throw new Error('Failed to load Yandex SpeechSense proto');
 }
 
-const restUrl = 'https://rest-api.speechsense.yandexcloud.net/speechsense/v1/talks/get';
+const getTalkRestUrl = 'https://rest-api.speechsense.yandexcloud.net/speechsense/v1/talks/get';
+const searchTalksRestUrl = 'https://rest-api.speechsense.yandexcloud.net/speechsense/v1/talks/search';
+const debugPolling = String(process.env.YANDEX_DEBUG_POLLING || 'false').toLowerCase() === 'true';
 
 const getAuthLabel = () => {
   if (env.yandex.apiKey) return `Api-Key ${env.yandex.apiKey}`;
@@ -39,59 +40,40 @@ const createGrpcClient = () => new TalkService(
 );
 
 const jsonRequest = async (url, options = {}) => {
-  const target = new URL(url);
   const body = options.body ? (typeof options.body === 'string' ? options.body : JSON.stringify(options.body)) : null;
-
-  return await new Promise((resolve, reject) => {
-    const req = https.request({
-      protocol: target.protocol,
-      hostname: target.hostname,
-      port: target.port || 443,
-      path: `${target.pathname}${target.search}`,
-      method: options.method || 'GET',
-      headers: {
-        ...options.headers,
-        ...(body ? { 'Content-Length': Buffer.byteLength(body) } : {}),
-      },
-      // The REST endpoint currently fails TLS validation in this runtime's Node CA chain,
-      // while the same endpoint is reachable via curl. Keep this narrow fallback local to
-      // SpeechSense polling so upload auth and the rest of the app remain unchanged.
-      rejectUnauthorized: false,
-    }, (res) => {
-      const chunks = [];
-      res.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-      res.on('end', () => {
-        const text = Buffer.concat(chunks).toString('utf8');
-        const data = text ? (() => {
-          try {
-            return JSON.parse(text);
-          } catch {
-            return { raw: text };
-          }
-        })() : null;
-
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          const error = new Error(`Yandex SpeechSense request failed: ${res.statusCode}`);
-          error.status = res.statusCode;
-          error.details = data;
-          return reject(error);
-        }
-
-        resolve(data);
-      });
-    });
-
-    req.on('error', reject);
-    if (body) req.write(body);
-    req.end();
+  const response = await fetch(url, {
+    method: options.method || 'GET',
+    headers: {
+      ...options.headers,
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body,
   });
+
+  const text = await response.text();
+  const data = text ? (() => {
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { raw: text };
+    }
+  })() : null;
+
+  if (!response.ok) {
+    const error = new Error(`Yandex SpeechSense request failed: ${response.status}`);
+    error.status = response.status;
+    error.details = data;
+    throw error;
+  }
+
+  return data;
 };
 
 const callGrpcUpload = (request) => new Promise((resolve, reject) => {
   const client = createGrpcClient();
   const metadata = new grpc.Metadata();
   metadata.set('authorization', getAuthLabel());
-  client.Upload(request, metadata, (error, response) => {
+  client.Upload(request, metadata, { deadline: Date.now() + env.yandex.uploadTimeoutMs }, (error, response) => {
     client.close();
     if (error) return reject(error);
     resolve(response);
@@ -167,24 +149,63 @@ const hasReadyTranscription = (talk) => {
 
 const hasTalkData = (talk) => Boolean(talk && typeof talk === 'object');
 
-const fetchTalk = async ({ talkId }) => jsonRequest(restUrl, {
+const buildResultsMaskPaths = (resultsMask) => {
+  if (Array.isArray(resultsMask)) {
+    return resultsMask.map((path) => String(path || '').trim()).filter(Boolean);
+  }
+
+  if (typeof resultsMask === 'string') {
+    return resultsMask
+      .split(',')
+      .map((path) => path.trim())
+      .filter(Boolean);
+  }
+
+  return String(env.yandex.resultsMask || '')
+    .split(',')
+    .map((path) => path.trim())
+    .filter(Boolean);
+};
+
+const buildTalkScope = () => ({
+  organizationId: env.yandex.organizationId,
+  spaceId: env.yandex.spaceId,
+  connectionId: env.yandex.connectionId,
+  projectId: env.yandex.projectId,
+});
+
+export const getYandexTalk = async ({ talkId, resultsMask } = {}) => jsonRequest(getTalkRestUrl, {
   method: 'POST',
   headers: {
     Authorization: getAuthLabel(),
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    organizationId: env.yandex.organizationId,
-    spaceId: env.yandex.spaceId,
-    connectionId: env.yandex.connectionId,
-    projectId: env.yandex.projectId,
+    ...buildTalkScope(),
     talkIds: [talkId],
     resultsMask: {
-      paths: String(env.yandex.resultsMask || '')
-        .split(',')
-        .map((path) => path.trim())
-        .filter(Boolean),
+      paths: buildResultsMaskPaths(resultsMask),
     },
+  }),
+});
+
+export const searchYandexTalks = async ({
+  pageSize = 100,
+  pageToken = '',
+  queryText = '',
+  filters = [],
+} = {}) => jsonRequest(searchTalksRestUrl, {
+  method: 'POST',
+  headers: {
+    Authorization: getAuthLabel(),
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    ...buildTalkScope(),
+    pageSize,
+    pageToken,
+    ...(queryText ? { query: { text: queryText } } : {}),
+    ...(Array.isArray(filters) && filters.length > 0 ? { filters } : {}),
   }),
 });
 
@@ -201,7 +222,7 @@ const buildTalkMetadata = (context = {}) => {
     client_name: String(context.clientName || context.clientPhone || context.clientId || context.callId || '').trim(),
     client_id: String(context.clientId || context.clientPhone || '').trim(),
     date: callDate,
-    language: 'ru-RU',
+    language: 'ru-ru',
     direction_outgoing: directionOutgoing,
   };
 
@@ -213,7 +234,7 @@ const buildTalkMetadata = (context = {}) => {
   };
 };
 
-export const transcribeWithYandexSpeechSense = async (audioBuffer, context = {}) => {
+export const uploadTalkToYandexSpeechSense = async (audioBuffer, context = {}) => {
   const uploaded = await callGrpcUpload({
     talk_id: env.yandex.useCallIdAsTalkId ? String(context.callId || '').trim() : '',
     metadata: buildTalkMetadata(context),
@@ -225,13 +246,21 @@ export const transcribeWithYandexSpeechSense = async (audioBuffer, context = {})
     throw new Error('Yandex SpeechSense talk_id missing');
   }
 
+  return { talkId, uploaded };
+};
+
+export const transcribeWithYandexSpeechSense = async (audioBuffer, context = {}) => {
+  const { talkId } = await uploadTalkToYandexSpeechSense(audioBuffer, context);
+
   const startedAt = Date.now();
   let lastTalk = null;
+  let pollCount = 0;
 
   while (Date.now() - startedAt < env.yandex.pollTimeoutMs) {
+    pollCount += 1;
     let response;
     try {
-      response = await fetchTalk({ talkId });
+      response = await getYandexTalk({ talkId });
     } catch (error) {
       if (error?.status === 404 || error?.status === 409) {
         await sleep(env.yandex.pollIntervalMs);
@@ -241,6 +270,18 @@ export const transcribeWithYandexSpeechSense = async (audioBuffer, context = {})
     }
 
     lastTalk = normalizeTalkResponse(response);
+    if (debugPolling) {
+      const phrasesCount = Array.isArray(lastTalk?.transcription?.phrases) ? lastTalk.transcription.phrases.length : 0;
+      console.log(JSON.stringify({
+        talkId,
+        pollCount,
+        elapsedMs: Date.now() - startedAt,
+        talkState: getTalkState(lastTalk),
+        speechkitState: getAlgorithmProcessingState(lastTalk, 'ALGORITHM_SPEECHKIT'),
+        phrasesCount,
+        hasTalkData: hasTalkData(lastTalk),
+      }));
+    }
     if (!hasTalkData(lastTalk)) {
       await sleep(env.yandex.pollIntervalMs);
       continue;

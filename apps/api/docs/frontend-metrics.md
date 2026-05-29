@@ -89,11 +89,11 @@
 - `customer_utt_length_mean`
 - `dialog_interruptions_count`
 
-Важно: если `insight_result.call_features` отсутствует, блок «Речевые метрики» в UI отображается как «нет данных».
+Важно: если `insight_result.call_features` отсутствует, блок «Речевые метрики» в UI скрывает неактуальные карточки и показывает только то, что доступно для провайдера записи.
 
-## 5) Устаревшие поля
+## 5) Провайдер-специфичные поля
 
-Следующие колонки могут присутствовать в старых записях, но текущий UI их больше не показывает:
+Следующие колонки могут присутствовать не у всех провайдеров. В UI они показываются только для Sber-записей, если пришли в ответе:
 
 - `csi_score`
 - `operator_emotion_positive`
@@ -120,17 +120,19 @@
 - LLM-поля и большая часть колонок `crm_analytics` (при корректном post-processing)
 - дашбордовые KPI на `overall_score/call_success`
 
-2. **Потеряется/станет null**:
+2. **Потеряется/станет null** для Yandex-записей:
 - `csi_score`
 - все эмоциональные поля оператора и клиента
 
 3. **Останется**:
 - речевые метрики из `insight_result.call_features`
 - статистика речи, тишины и перебиваний
+- provider-aware UI, который скрывает неподдерживаемые поля
 
 Практический компромисс для текущего UI:
-- `SPEECH_PROVIDER=yandex`
+- `SPEECH_PROVIDER=yandex` или `SPEECH_PROVIDER=sber`
 - `YANDEX_RESULTS_MASK=transcription,speechStatistics,silenceStatistics,interruptsStatistics,conversationStatistics,talkState`
+- для Sber используются `csi` и `call_features`, а UI показывает эмоции и CSI только на Sber-записях
 
 Именно такой режим позволяет сохранить основную визуализацию метрик во фронтенде без CSI и эмоций.
 

@@ -10,6 +10,7 @@ import {
   updateCrmById,
 } from '../db/mainDb.js';
 import { buildTranscriptFromSpeechAnalysis, normalizeSpeechAnalysisResult } from './transcriptBuilder.js';
+import { withRetry } from '../utils/retry.js';
 import { calcBackoffMs } from '../utils/time.js';
 
 export const markCompleted = async ({ row, speechAnalysis, transcript, llm, openAiRaw }) => {
@@ -138,6 +139,28 @@ const getTranscriptFromStoredRow = (row) => {
   });
 };
 
+const isTransientS3Error = (error) => {
+  const message = String(error?.message || '');
+  const status = Number(error?.$metadata?.httpStatusCode || error?.statusCode || 0);
+  return (
+    /fetch failed/i.test(message)
+    || /timeout/i.test(message)
+    || /ECONNRESET/i.test(message)
+    || /socket hang up/i.test(message)
+    || status >= 500
+  );
+};
+
+const downloadAudioWithRetry = async (key) => withRetry(
+  async () => downloadFromS3(key),
+  {
+    maxAttempts: 4,
+    baseDelayMs: 1500,
+    maxDelayMs: 10000,
+    shouldRetry: isTransientS3Error,
+  },
+);
+
 const runOpenAiAnalysis = async ({
   row,
   transcript,
@@ -187,7 +210,7 @@ const finalizeCompletedCall = async ({
 
 export const processMainRow = async (row) => {
   try {
-    const audio = await downloadFromS3(row.file_name);
+    const audio = await downloadAudioWithRetry(row.file_name);
     const speechResult = await transcribeSpeechAudio(audio, {
       callId: row.call_id,
       callDatetime: row.call_datetime,

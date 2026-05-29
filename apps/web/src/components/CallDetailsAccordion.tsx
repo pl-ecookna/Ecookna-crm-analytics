@@ -22,9 +22,12 @@ import {
   Mic,
   Repeat,
   Activity,
+  Cpu,
+  Waves,
+  Radar,
 } from "lucide-react";
 import TranscriptDisplay from "./TranscriptDisplay";
-import type { CrmCallDetails } from "@ecookna/shared-types";
+import type { CrmCallDetails, SpeechAnalysisPayload } from "@ecookna/shared-types";
 
 type CrmCallAnalysis = CrmCallDetails;
 
@@ -33,6 +36,87 @@ interface CallDetailsAccordionProps {
 }
 
 export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call }) => {
+  type YandexPhrase = {
+    channelNumber?: number | string;
+    channel_number?: number | string;
+    startTimeMs?: number | string;
+    start_time_ms?: number | string;
+    endTimeMs?: number | string;
+    end_time_ms?: number | string;
+    phrase?: {
+      text?: string;
+      normalizedText?: string;
+      normalized_text?: string;
+    };
+  };
+
+  type YandexTalk = {
+    id?: string;
+    transcription?: {
+      phrases?: YandexPhrase[];
+    };
+    speechStatistics?: unknown;
+    speech_statistics?: unknown;
+    silenceStatistics?: {
+      totalSimultaneousSilenceRatio?: number | string;
+      total_simultaneous_silence_ratio?: number | string;
+    };
+    silence_statistics?: {
+      totalSimultaneousSilenceRatio?: number | string;
+      total_simultaneous_silence_ratio?: number | string;
+    };
+    conversationStatistics?: {
+      conversationBoundaries?: {
+        durationSeconds?: number | string;
+        duration_seconds?: number | string;
+      };
+      conversation_boundaries?: {
+        durationSeconds?: number | string;
+        duration_seconds?: number | string;
+      };
+    };
+    conversation_statistics?: {
+      conversationBoundaries?: {
+        durationSeconds?: number | string;
+        duration_seconds?: number | string;
+      };
+      conversation_boundaries?: {
+        durationSeconds?: number | string;
+        duration_seconds?: number | string;
+      };
+    };
+    talkState?: {
+      processingState?: string;
+      processing_state?: string;
+      algorithmProcessingInfos?: Array<{
+        algorithm?: string;
+        processingState?: string;
+        processing_state?: string;
+      }>;
+      algorithm_processing_infos?: Array<{
+        algorithm?: string;
+        processingState?: string;
+        processing_state?: string;
+      }>;
+    };
+    talk_state?: {
+      processingState?: string;
+      processing_state?: string;
+      algorithmProcessingInfos?: Array<{
+        algorithm?: string;
+        processingState?: string;
+        processing_state?: string;
+      }>;
+      algorithm_processing_infos?: Array<{
+        algorithm?: string;
+        processingState?: string;
+        processing_state?: string;
+      }>;
+    };
+  };
+
+  type SpeechAnalysisJson = SpeechAnalysisPayload;
+
   const toNullableNumber = (value: unknown): number | null => {
     if (value === null || value === undefined || value === "") return null;
     const parsed = Number(value);
@@ -52,13 +136,18 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
   // Функция извлечения данных из transkription_full_json
   const getCallFeature = (featureName: string): number | null => {
     try {
-      const json = call.transkription_full_json as {
-        insight_result?: {
-          call_features?: Record<string, unknown>;
-        };
-      } | null | undefined;
-      if (!json?.insight_result?.call_features) return null;
-      return toNullableNumber(json.insight_result.call_features[featureName]);
+      if (!normalizedCallFeatures) return null;
+      return toNullableNumber(normalizedCallFeatures[featureName]);
+    } catch {
+      return null;
+    }
+  };
+
+  const getRawCallFeature = (featureName: string): number | null => {
+    try {
+      const features = rawInsightResult?.call_features;
+      if (!features) return null;
+      return toNullableNumber(features[featureName]);
     } catch {
       return null;
     }
@@ -87,6 +176,196 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
     const wordsPerMinute = Math.round(speedPerSecond * 60);
     return `${wordsPerMinute} сл/мин`;
   };
+
+  const formatPercentValue = (value: number | null, digits = 1): string => {
+    if (value === null || value === undefined) return '—';
+    return `${(value * 100).toFixed(digits)}%`;
+  };
+
+  const getProviderLabel = (value: string): string => {
+    switch (value) {
+      case 'sber':
+        return 'SaluteSpeech';
+      case 'yandex':
+        return 'Yandex SpeechSense';
+      default:
+        return value || '—';
+    }
+  };
+
+  const formatTimestamp = (value: string | null | undefined) => {
+    if (!value) return '—';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return parsed.toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  const pick = <T,>(object: Record<string, unknown> | null | undefined, ...keys: string[]): T | undefined => {
+    for (const key of keys) {
+      if (object && object[key] !== undefined) {
+        return object[key] as T;
+      }
+    }
+    return undefined;
+  };
+
+  const getSpeechAnalysisJson = (): SpeechAnalysisJson | null => {
+    if (!call.transkription_full_json || typeof call.transkription_full_json !== 'object') return null;
+    return call.transkription_full_json as SpeechAnalysisJson;
+  };
+
+  const speechAnalysis = getSpeechAnalysisJson();
+  const speechProvider = String(speechAnalysis?.provider || '').trim().toLowerCase();
+  const isSberProvider = speechProvider === 'sber';
+  const isYandexProvider = speechProvider === 'yandex';
+  const providerResult = speechAnalysis?.provider_result && typeof speechAnalysis.provider_result === 'object'
+    ? speechAnalysis.provider_result
+    : null;
+  const rawInsightResult = providerResult?.insight_result && typeof providerResult.insight_result === 'object'
+    ? providerResult.insight_result
+    : null;
+  const normalizedCallFeatures = (
+    speechAnalysis?.insight_result?.call_features
+    || rawInsightResult?.call_features
+    || {}
+  ) as Record<string, unknown>;
+  const yandexTalk = isYandexProvider && Array.isArray(providerResult?.talk)
+    ? providerResult.talk?.[0] || null
+    : null;
+
+  const rawPhrases = Array.isArray(yandexTalk?.transcription?.phrases) ? yandexTalk.transcription.phrases : [];
+  const timelineSegments = rawPhrases
+    .map((phrase) => {
+      const startMs = toNullableNumber(pick<number | string>(phrase as Record<string, unknown>, 'startTimeMs', 'start_time_ms'));
+      const endMs = toNullableNumber(pick<number | string>(phrase as Record<string, unknown>, 'endTimeMs', 'end_time_ms'));
+      const channel = toNullableNumber(pick<number | string>(phrase as Record<string, unknown>, 'channelNumber', 'channel_number')) ?? 0;
+      const phraseBody = (phrase?.phrase || {}) as Record<string, unknown>;
+      const text = String(
+        pick<string>(phraseBody, 'normalizedText', 'normalized_text')
+          || pick<string>(phraseBody, 'text')
+          || '',
+      ).trim();
+
+      if (startMs === null || endMs === null || endMs <= startMs || !text) return null;
+
+      return {
+        channel,
+        startMs,
+        endMs,
+        durationMs: endMs - startMs,
+        text,
+      };
+    })
+    .filter((segment): segment is NonNullable<typeof segment> => Boolean(segment))
+    .sort((a, b) => a.startMs - b.startMs);
+
+  const conversationDurationMs = (() => {
+    const fromBoundaries = toNullableNumber(
+      pick<number | string>(
+        (pick<Record<string, unknown>>(yandexTalk as Record<string, unknown>, 'conversationStatistics', 'conversation_statistics')
+          ? {
+              ...(pick<Record<string, unknown>>(yandexTalk as Record<string, unknown>, 'conversationStatistics', 'conversation_statistics') || {}),
+              ...(pick<Record<string, unknown>>(
+                pick<Record<string, unknown>>(yandexTalk as Record<string, unknown>, 'conversationStatistics', 'conversation_statistics'),
+                'conversationBoundaries',
+                'conversation_boundaries',
+              ) || {}),
+            }
+          : null),
+        'durationSeconds',
+        'duration_seconds',
+      ),
+    );
+
+    if (fromBoundaries !== null && fromBoundaries > 0) {
+      return fromBoundaries * 1000;
+    }
+
+    if (timelineSegments.length === 0) return null;
+    const minStart = Math.min(...timelineSegments.map((segment) => segment.startMs));
+    const maxEnd = Math.max(...timelineSegments.map((segment) => segment.endMs));
+    return Math.max(0, maxEnd - minStart);
+  })();
+
+  const talkState = String(
+    pick<string>(yandexTalk?.talkState as Record<string, unknown>, 'processingState', 'processing_state')
+      || pick<string>(yandexTalk?.talk_state as Record<string, unknown>, 'processingState', 'processing_state')
+      || '',
+  ).trim();
+
+  const algorithmStates = (
+    pick<Array<Record<string, unknown>>>(yandexTalk?.talkState as Record<string, unknown>, 'algorithmProcessingInfos', 'algorithm_processing_infos')
+    || pick<Array<Record<string, unknown>>>(yandexTalk?.talk_state as Record<string, unknown>, 'algorithmProcessingInfos', 'algorithm_processing_infos')
+    || []
+  ).map((item) => ({
+    algorithm: String(item.algorithm || '').trim(),
+    state: String(
+      pick<string>(item, 'processingState', 'processing_state') || '',
+    ).trim(),
+  })).filter((item) => item.algorithm && item.state);
+
+  const statusTone = (state: string) => {
+    if (state.includes('SUCCESS')) return 'bg-success/10 text-success border-success/20';
+    if (state.includes('FAILED')) return 'bg-destructive/10 text-destructive border-destructive/20';
+    if (state.includes('PROCESSING')) return 'bg-warning/10 text-warning border-warning/20';
+    return 'bg-muted/20 text-muted-foreground border-muted/20';
+  };
+
+  const statusLabel = (state: string) => {
+    if (state.includes('SUCCESS')) return 'Готово';
+    if (state.includes('FAILED')) return 'Ошибка';
+    if (state.includes('PROCESSING')) return 'В обработке';
+    if (state.includes('NOT_STARTED')) return 'Не начато';
+    return state || '—';
+  };
+
+  const algorithmLabel = (algorithm: string) => {
+    switch (algorithm) {
+      case 'ALGORITHM_SPEECHKIT':
+        return 'SpeechKit';
+      case 'ALGORITHM_CLASSIFIER':
+        return 'Классификатор';
+      case 'ALGORITHM_SUMMARIZATION':
+        return 'Суммаризация';
+      case 'ALGORITHM_EMBEDDING':
+        return 'Embedding';
+      case 'ALGORITHM_ASSISTANT':
+        return 'Assistant';
+      default:
+        return algorithm.replace('ALGORITHM_', '');
+    }
+  };
+
+  const talkId = yandexTalk?.id || '—';
+  const phrasesCount = timelineSegments.length;
+  const silencePercent = getCallFeature('dialog_silence_length_percentage');
+  const interruptionsCount = getCallFeature('dialog_interruptions_count');
+  const operatorInterruptedPercent = getCallFeature('dialog_interruptions_in_agent_speech_percentage') !== null
+    ? getCallFeature('dialog_interruptions_in_agent_speech_percentage')
+    : null;
+  const operatorSpeechPercent = getCallFeature('dialog_agent_speech_percentage');
+  const customerSpeechPercent = getCallFeature('dialog_customer_speech_percentage');
+  const nonSpeechPausePercent = (
+    silencePercent === null
+    || operatorSpeechPercent === null
+    || customerSpeechPercent === null
+  )
+    ? null
+    : Math.max(0, 1 - operatorSpeechPercent - customerSpeechPercent - silencePercent);
+  const sberCsi = rawInsightResult?.csi && typeof rawInsightResult.csi === 'object'
+    ? rawInsightResult.csi as Record<string, unknown>
+    : null;
+  const providerTalkCount = Array.isArray(providerResult?.result)
+    ? providerResult.result.length
+    : phrasesCount;
+  const timelineHasData = Boolean(conversationDurationMs && conversationDurationMs > 0 && timelineSegments.length > 0);
 
   // Утилитарные функции
   const calculateCriteriaScore = () => {
@@ -448,6 +727,9 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             <Award className="h-5 w-5 text-primary" />
             <span className="text-base font-medium">Оценки и баллы</span>
             <div className="ml-auto flex items-center gap-2">
+              <Badge variant="secondary" className="font-medium">
+                {getProviderLabel(speechProvider)}
+              </Badge>
               <Star className="h-4 w-4 text-warning" />
               <span className={`text-sm font-medium ${getScoreColor(call.overall_score, 10)}`}>
                 {formatScoreValue(call.overall_score)}/10
@@ -749,8 +1031,55 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-4">
+          {isYandexProvider && (talkState || algorithmStates.length > 0) && (
+            <Card className="mb-4">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Cpu className="h-4 w-4" />
+                  Статус обработки анализа
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className={statusTone(talkState)}>
+                    Общий статус: {statusLabel(talkState)}
+                  </Badge>
+                  {algorithmStates.map((item) => (
+                    <Badge key={`${item.algorithm}-${item.state}`} variant="outline" className={statusTone(item.state)}>
+                      {algorithmLabel(item.algorithm)}: {statusLabel(item.state)}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {isSberProvider && sberCsi && (
+            <Card className="mb-4">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Star className="h-4 w-4" />
+                  CSI анализа
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Прогноз:</span>
+                  <span className="font-medium text-right">{String(sberCsi.prediction ?? '—')}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Положительный:</span>
+                  <span className="font-medium text-right">{formatPercentValue(toNullableNumber(sberCsi.positive ?? null))}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Отрицательный:</span>
+                  <span className="font-medium text-right">{formatPercentValue(toNullableNumber(sberCsi.negative ?? null))}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Речь оператора */}
             <Card className={!getCallFeature('agent_speech_length_sum') ? 'opacity-60' : ''}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -763,63 +1092,62 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Длительность:</span>
-                      <span className="font-medium">
-                        {formatSeconds(getCallFeature('agent_speech_length_sum'))}
-                      </span>
+                      <span className="font-medium">{formatSeconds(getCallFeature('agent_speech_length_sum'))}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Слов:</span>
-                      <span className="font-medium">
-                        {getCallFeature('agent_n_words_sum')?.toLocaleString() || '—'}
-                      </span>
+                      <span className="font-medium">{getCallFeature('agent_n_words_sum')?.toLocaleString() || '—'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Скорость:</span>
-                      <span className="font-medium">
-                        {formatSpeechSpeed(getCallFeature('agent_speech_speed_words_all_call_mean'))}
-                      </span>
+                      <span className="font-medium">{formatSpeechSpeed(getCallFeature('agent_speech_speed_words_all_call_mean'))}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Реплик:</span>
-                      <span className="font-medium">
-                        {getCallFeature('agent_utt_count') || '—'}
-                      </span>
+                      <span className="font-medium">{getCallFeature('agent_utt_count') || '—'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Средняя реплика:</span>
-                      <span className="font-medium">
-                        {formatSeconds(getCallFeature('agent_utt_length_mean'))}
-                      </span>
+                      <span className="font-medium">{formatSeconds(getCallFeature('agent_utt_length_mean'))}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Прерываний:</span>
-                      <span className="font-medium">
-                        {getCallFeature('dialog_interruptions_in_agent_speech_percentage') !== null
-                          ? `${((getCallFeature('dialog_interruptions_in_agent_speech_percentage') || 0) * 100).toFixed(1)}%`
-                          : '—'}
-                      </span>
+                      <span className="font-medium">{formatPercentValue(operatorInterruptedPercent)}</span>
                     </div>
                   </div>
-                  {/* Progress bar для доли речи */}
                   {getCallFeature('dialog_agent_speech_percentage') !== null && (
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Доля речи:</span>
-                        <span className="font-medium">
-                          {((getCallFeature('dialog_agent_speech_percentage') || 0) * 100).toFixed(1)}%
-                        </span>
+                        <span className="font-medium">{formatPercentValue(getCallFeature('dialog_agent_speech_percentage'))}</span>
                       </div>
-                      <Progress 
+                      <Progress
                         value={(getCallFeature('dialog_agent_speech_percentage') || 0) * 100}
                         className="h-2"
                       />
+                    </div>
+                  )}
+                  {isSberProvider && (
+                    <div className="rounded-md border bg-muted/20 p-3 space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground">Эмоции оператора</div>
+                      <div className="flex justify-between text-sm gap-4">
+                        <span className="text-muted-foreground">Положительные:</span>
+                        <span className="font-medium text-right">{formatPercentValue(getRawCallFeature('operator_emotion_positive'))}</span>
+                      </div>
+                      <div className="flex justify-between text-sm gap-4">
+                        <span className="text-muted-foreground">Нейтральные:</span>
+                        <span className="font-medium text-right">{formatPercentValue(getRawCallFeature('operator_emotion_neutral'))}</span>
+                      </div>
+                      <div className="flex justify-between text-sm gap-4">
+                        <span className="text-muted-foreground">Негативные:</span>
+                        <span className="font-medium text-right">{formatPercentValue(getRawCallFeature('operator_emotion_negative'))}</span>
+                      </div>
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Речь клиента */}
             <Card className={!getCallFeature('customer_speech_length_sum') ? 'opacity-60' : ''}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -832,56 +1160,62 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Длительность:</span>
-                      <span className="font-medium">
-                        {formatSeconds(getCallFeature('customer_speech_length_sum'))}
-                      </span>
+                      <span className="font-medium">{formatSeconds(getCallFeature('customer_speech_length_sum'))}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Слов:</span>
-                      <span className="font-medium">
-                        {getCallFeature('customer_n_words_sum')?.toLocaleString() || '—'}
-                      </span>
+                      <span className="font-medium">{getCallFeature('customer_n_words_sum')?.toLocaleString() || '—'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Скорость:</span>
-                      <span className="font-medium">
-                        {formatSpeechSpeed(getCallFeature('customer_speech_speed_words_all_call_mean'))}
-                      </span>
+                      <span className="font-medium">{formatSpeechSpeed(getCallFeature('customer_speech_speed_words_all_call_mean'))}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Реплик:</span>
-                      <span className="font-medium">
-                        {getCallFeature('customer_utt_count') || '—'}
-                      </span>
+                      <span className="font-medium">{getCallFeature('customer_utt_count') || '—'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Средняя реплика:</span>
-                      <span className="font-medium">
-                        {formatSeconds(getCallFeature('customer_utt_length_mean'))}
-                      </span>
+                      <span className="font-medium">{formatSeconds(getCallFeature('customer_utt_length_mean'))}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Прерываний:</span>
+                      <span className="text-muted-foreground">Перебиваний:</span>
                       <span className="font-medium">
-                        {getCallFeature('dialog_interruptions_count') !== null
-                          ? getCallFeature('dialog_interruptions_count')
-                          : '—'}
+                        {interruptionsCount !== null && interruptionsCount !== undefined ? interruptionsCount : '—'}
                       </span>
                     </div>
                   </div>
-                  {/* Progress bar для доли речи */}
                   {getCallFeature('dialog_customer_speech_percentage') !== null && (
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Доля речи:</span>
-                        <span className="font-medium">
-                          {((getCallFeature('dialog_customer_speech_percentage') || 0) * 100).toFixed(1)}%
-                        </span>
+                        <span className="font-medium">{formatPercentValue(getCallFeature('dialog_customer_speech_percentage'))}</span>
                       </div>
-                      <Progress 
+                      <Progress
                         value={(getCallFeature('dialog_customer_speech_percentage') || 0) * 100}
                         className="h-2"
                       />
+                    </div>
+                  )}
+                  {isSberProvider && (
+                    <div className="rounded-md border bg-muted/20 p-3 space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground">Эмоции клиента</div>
+                      <div className="flex justify-between text-sm gap-4">
+                        <span className="text-muted-foreground">Средний скор:</span>
+                        <span className="font-medium text-right">{formatScoreValue(getRawCallFeature('customer_emo_score_mean'))}</span>
+                      </div>
+                      <div className="flex justify-between text-sm gap-4">
+                        <span className="text-muted-foreground">Негативная речь:</span>
+                        <span className="font-medium text-right">{formatPercentValue(getRawCallFeature('customer_emotion_neg_speech_time_percentage'))}</span>
+                      </div>
+                      <div className="flex justify-between text-sm gap-4">
+                        <span className="text-muted-foreground">Позитивная речь:</span>
+                        <span className="font-medium text-right">{formatPercentValue(getRawCallFeature('customer_emotion_pos_speech_time_percentage'))}</span>
+                      </div>
+                      <div className="flex justify-between text-sm gap-4">
+                        <span className="text-muted-foreground">Позитивные реплики:</span>
+                        <span className="font-medium text-right">{formatPercentValue(getRawCallFeature('customer_emotion_pos_utt_percentage'))}</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -889,7 +1223,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             </Card>
           </div>
 
-          {/* Баланс диалога - визуальный чарт */}
           <Card className="mt-4">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -899,51 +1232,51 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             </CardHeader>
             <CardContent>
               {(() => {
-                const agentPercent = (getCallFeature('dialog_agent_speech_percentage') || 0) * 100;
-                const customerPercent = (getCallFeature('dialog_customer_speech_percentage') || 0) * 100;
-                const silencePercent = (getCallFeature('dialog_silence_length_percentage') || 0) * 100;
-                const pausePercent = Math.max(0, 100 - agentPercent - customerPercent - silencePercent);
-                const hasData = agentPercent > 0 || customerPercent > 0 || silencePercent > 0 || pausePercent > 0;
-                
+                const agentPercent = operatorSpeechPercent;
+                const customerPercent = customerSpeechPercent;
+                const silenceRatio = silencePercent;
+                const pausePercent = nonSpeechPausePercent;
+                const hasData = [agentPercent, customerPercent, silenceRatio, pausePercent].some((value) => value !== null);
+
                 return (
                   <div className={!hasData ? 'opacity-60' : ''}>
-                    {/* Легенда с процентами */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-primary"></div>
-                        <span className="text-xs">Оператор: {agentPercent.toFixed(1)}%</span>
+                        <div className="w-3 h-3 rounded bg-primary" />
+                        <span className="text-xs">Оператор: {formatPercentValue(agentPercent)}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-blue-400"></div>
-                        <span className="text-xs">Клиент: {customerPercent.toFixed(1)}%</span>
+                        <div className="w-3 h-3 rounded bg-blue-400" />
+                        <span className="text-xs">Клиент: {formatPercentValue(customerPercent)}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-yellow-400"></div>
-                        <span className="text-xs">Тишина: {silencePercent.toFixed(1)}%</span>
+                        <div className="w-3 h-3 rounded bg-yellow-400" />
+                        <span className="text-xs">Тишина: {formatPercentValue(silenceRatio)}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-muted-foreground/40"></div>
-                        <span className="text-xs">Паузы: {pausePercent.toFixed(1)}%</span>
+                        <div className="w-3 h-3 rounded bg-muted-foreground/40" />
+                        <span className="text-xs">
+                          Паузы: {pausePercent === null ? '—' : `${(pausePercent * 100).toFixed(1)}%`}
+                        </span>
                       </div>
                     </div>
-                    
-                    {/* Стековый прогресс бар */}
+
                     <div className="relative h-8 w-full bg-muted/30 rounded-md overflow-hidden flex">
-                      <div 
-                        className="bg-primary h-full transition-all" 
-                        style={{width: `${agentPercent}%`}}
+                      <div
+                        className="bg-primary h-full transition-all"
+                        style={{ width: `${(agentPercent || 0) * 100}%` }}
                       />
-                      <div 
-                        className="bg-blue-400 h-full transition-all" 
-                        style={{width: `${customerPercent}%`}}
+                      <div
+                        className="bg-blue-400 h-full transition-all"
+                        style={{ width: `${(customerPercent || 0) * 100}%` }}
                       />
-                      <div 
-                        className="bg-yellow-400 h-full transition-all" 
-                        style={{width: `${silencePercent}%`}}
+                      <div
+                        className="bg-yellow-400 h-full transition-all"
+                        style={{ width: `${(silenceRatio || 0) * 100}%` }}
                       />
-                      <div 
-                        className="bg-muted-foreground/40 h-full transition-all" 
-                        style={{width: `${pausePercent}%`}}
+                      <div
+                        className="bg-muted-foreground/40 h-full transition-all"
+                        style={{ width: `${(pausePercent || 0) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -951,6 +1284,136 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               })()}
             </CardContent>
           </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <Card className={silencePercent === null && interruptionsCount === null && operatorInterruptedPercent === null ? 'opacity-60' : ''}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Waves className="h-4 w-4" />
+                  Паузы и перебивания
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Одновременная тишина:</span>
+                    <span className="font-medium">{formatPercentValue(silencePercent)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Паузы вне речи:</span>
+                    <span className="font-medium">
+                      {nonSpeechPausePercent === null ? '—' : `${(nonSpeechPausePercent * 100).toFixed(1)}%`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Всего перебиваний:</span>
+                    <span className="font-medium">{interruptionsCount ?? '—'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Оператора перебивали:</span>
+                    <span className="font-medium">{formatPercentValue(operatorInterruptedPercent)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {isYandexProvider && (
+              <Card className={!timelineHasData ? 'opacity-60' : ''}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Radar className="h-4 w-4" />
+                    Таймлайн разговора
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {timelineHasData ? (
+                    <div className="space-y-3">
+                      {[
+                        { label: decodeUtf8(call.user_name) || 'Оператор', channel: 0, barClass: 'bg-primary' },
+                        { label: 'Клиент', channel: 1, barClass: 'bg-blue-400' },
+                      ].map((lane) => (
+                        <div key={lane.channel} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">{lane.label}</span>
+                            <span className="text-muted-foreground">
+                              {timelineSegments.filter((segment) => segment.channel === lane.channel).length} реплик
+                            </span>
+                          </div>
+                          <div className="relative h-4 w-full rounded bg-muted/30 overflow-hidden">
+                            {timelineSegments
+                              .filter((segment) => segment.channel === lane.channel)
+                              .map((segment, index) => {
+                                const left = conversationDurationMs ? (segment.startMs / conversationDurationMs) * 100 : 0;
+                                const width = conversationDurationMs ? Math.max(0.8, (segment.durationMs / conversationDurationMs) * 100) : 0;
+                                return (
+                                  <div
+                                    key={`${lane.channel}-${segment.startMs}-${index}`}
+                                    className={`absolute top-0 h-full rounded-sm ${lane.barClass}`}
+                                    style={{ left: `${left}%`, width: `${width}%` }}
+                                    title={`${lane.label}: ${segment.text}`}
+                                  />
+                                );
+                              })}
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>00:00</span>
+                        <span>{formatSeconds(conversationDurationMs / 1000)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Недостаточно данных для таймлайна</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {(speechProvider || talkId !== '—' || phrasesCount > 0 || providerTalkCount > 0) && (
+            <Card className="mt-4 border-dashed">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  Технические данные анализа
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">Провайдер:</span>
+                    <span className="font-medium text-right">{speechProvider || '—'}</span>
+                  </div>
+                  {isYandexProvider && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">ID диалога:</span>
+                      <span className="font-medium text-right break-all">{talkId}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">Фраз в данных:</span>
+                    <span className="font-medium text-right">{providerTalkCount || '—'}</span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">Нормализованных метрик:</span>
+                    <span className="font-medium text-right">{Object.keys(normalizedCallFeatures).length || '—'}</span>
+                  </div>
+                  {isYandexProvider && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">Старт анализа:</span>
+                      <span className="font-medium text-right">{formatTimestamp(call.call_datetime)}</span>
+                    </div>
+                  )}
+                  {isSberProvider && sberCsi && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">CSI prediction:</span>
+                      <span className="font-medium text-right">{String(sberCsi.prediction ?? '—')}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </AccordionContent>
       </AccordionItem>
 

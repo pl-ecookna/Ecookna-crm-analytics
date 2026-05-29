@@ -117,6 +117,7 @@ test('builds a transcript and normalized payload for Yandex talk response', () =
     customerChannel: 1,
   });
 
+  assert.equal(normalized.schema_version, 1);
   assert.equal(normalized.provider, 'yandex');
   assert.equal(normalized.provider_result.talk.length, 1);
   assert.equal(normalized.insight_result.call_features.csi_score, null);
@@ -162,6 +163,7 @@ test('strips legacy CSI and emotion fields from Sber normalized payload', () => 
     },
   });
 
+  assert.equal(normalized.schema_version, 1);
   assert.equal(normalized.provider, 'sber');
   assert.equal(normalized.insight_result.csi, null);
   assert.equal(normalized.insight_result.call_features.dialog_agent_speech_percentage, 0.42);

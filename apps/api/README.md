@@ -123,3 +123,21 @@ docker compose up -d --build
 WEBHOOK_URL=http://localhost:3000/webhook/getcrmdata \
 ./tests/send_webhook_fixture.sh ./tests/fixtures/webhook/approve.json ./tests/audio/sample_approve.mp3
 ```
+
+## Локальная диагностика SpeechSense
+
+Мини-пайплайн без БД, S3 и UI проверяет прямой gRPC `TalkService.Upload`, затем poll-ит результат и печатает диагностический JSON:
+
+```bash
+cd apps/api
+pnpm debug:yandex-local-file -- test-audio/i5460570.mp3
+```
+
+Скрипт использует `apps/api/.env` или путь из `ENV_FILE`. Для повторяемого `talk_id` можно задать `YANDEX_DEBUG_CALL_ID`, а таймаут poll-инга - через `YANDEX_DEBUG_POLL_TIMEOUT_MS`.
+
+Важно: по результатам проверки и ответу поддержки Yandex прямой upload нельзя считать рабочим production-путем для появления записи в проекте SpeechSense. Для автоматизации в этом проекте целевой путь - ingestion через Object Storage/интеграцию SpeechSense.
+
+Подтвержденные наблюдения по тестам 2026-05-28:
+- `TalkService.Upload` принимает файл и возвращает `talk_id`, но этот `talk_id` не совпадает с итоговым `ID диалога` в UI и в `search`.
+- Новый диалог появляется в проекте только через `search`/UI по факту индексации, поэтому связывать upload и результат нужно по уникальным metadata-полям, а не по `upload_talk_id`.
+- Зафиксирована существенная задержка между upload и появлением диалога в проекте: для `speechsense-debug-20260528080414` диалог появился примерно через 1 час 3 минуты после отправки.

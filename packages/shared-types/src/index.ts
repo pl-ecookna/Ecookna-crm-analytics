@@ -30,6 +30,7 @@ export interface CrmCallListItem {
 }
 
 export interface CrmCallDetails extends CrmCallListItem {
+  provider?: string | null;
   greeting_correct?: boolean | null;
   operator_said_name?: boolean | null;
   cause_identified?: boolean | null;
@@ -60,7 +61,66 @@ export interface CrmCallDetails extends CrmCallListItem {
   transfer_comment?: string | null;
   tag?: string | null;
   transkription?: string | null;
-  transkription_full_json?: unknown;
+  transkription_full_json?: SpeechAnalysisPayload | null;
+  [key: string]: unknown;
+}
+
+export type SpeechProvider = 'sber' | 'yandex';
+
+export interface SpeechAnalysisTalkPhrase {
+  channelNumber?: number | string;
+  channel_number?: number | string;
+  startTimeMs?: number | string;
+  start_time_ms?: number | string;
+  endTimeMs?: number | string;
+  end_time_ms?: number | string;
+  phrase?: {
+    text?: string;
+    normalizedText?: string;
+    normalized_text?: string;
+    words?: Array<Record<string, unknown>>;
+  };
+}
+
+export interface SpeechAnalysisTalk {
+  id?: string;
+  transcription?: {
+    phrases?: SpeechAnalysisTalkPhrase[];
+  };
+  talkState?: Record<string, unknown>;
+  talk_state?: Record<string, unknown>;
+  conversationStatistics?: Record<string, unknown>;
+  conversation_statistics?: Record<string, unknown>;
+  silenceStatistics?: Record<string, unknown>;
+  silence_statistics?: Record<string, unknown>;
+  speechStatistics?: Record<string, unknown>;
+  speech_statistics?: Record<string, unknown>;
+  interruptsStatistics?: Record<string, unknown>;
+  interrupts_statistics?: Record<string, unknown>;
+  summarization?: Record<string, unknown>;
+  textClassifiers?: Record<string, unknown>;
+  talk_fields?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface SpeechAnalysisPayload {
+  schema_version?: number;
+  provider?: SpeechProvider | string;
+  provider_result?: {
+    talk?: SpeechAnalysisTalk[];
+    result?: unknown[];
+    insight_result?: {
+      csi?: Record<string, unknown> | null;
+      call_features?: Record<string, unknown>;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+  insight_result?: {
+    csi?: Record<string, unknown> | null;
+    call_features?: Record<string, unknown>;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 

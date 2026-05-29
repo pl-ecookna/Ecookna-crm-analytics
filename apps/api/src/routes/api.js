@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import { deleteFromS3 } from '../clients/s3Client.js';
 import { log } from '../utils/logger.js';
 import { requireRole } from '../middleware/auth.js';
+import { getCrmCallById, updateCrmById } from '../db/mainDb.js';
 import { reprocessCallById, reprocessLlmOnlyById } from '../services/mainAnalysisService.js';
 
 const router = express.Router();
@@ -243,11 +244,27 @@ router.post('/crm/calls/:id/reprocess', requireRole('admin'), async (req, res) =
       return res.status(400).json({ error: 'Invalid id' });
     }
 
-    const updatedRow = await reprocessCallById(id);
-    if (!updatedRow) {
+    const existingRow = await getCrmCallById(id);
+    if (!existingRow) {
       return res.status(404).json({ error: 'Call not found' });
     }
 
+    await updateCrmById(id, {
+      file_status: 'processing',
+      processing_started_at: new Date().toISOString(),
+      last_error: null,
+      next_retry_at: null,
+    });
+
+    void reprocessCallById(id).catch((error) => {
+      log.error('Background CRM reprocess failed', {
+        id,
+        callId: existingRow.call_id || null,
+        error: error?.message || String(error),
+      });
+    });
+
+    const updatedRow = await getCrmCallById(id);
     return res.json(updatedRow);
   } catch (error) {
     return res.status(500).json({
