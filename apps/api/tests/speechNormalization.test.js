@@ -171,3 +171,41 @@ test('strips legacy CSI and emotion fields from Sber normalized payload', () => 
   assert.equal(normalized.insight_result.call_features.operator_emotion_positive, undefined);
   assert.equal(normalized.insight_result.call_features.customer_emo_score_mean, undefined);
 });
+
+test('builds a readable Sber transcript from duration strings', () => {
+  const transcript = buildTranscriptFromSpeechAnalysis({
+    provider: 'sber',
+    rawResult: {
+      result: [
+        {
+          eou: true,
+          channel: 0,
+          results: [
+            {
+              start: '1.080s',
+              normalized_text: 'Добрый день, Кокка Алина.',
+            },
+          ],
+        },
+        {
+          eou: true,
+          channel: 1,
+          results: [
+            {
+              start: '16.015998976s',
+              normalized_text: 'Того, как мы должны были к его приезду демонтировать то, что есть.',
+            },
+          ],
+        },
+      ],
+      insight_result: {
+        call_features: {},
+      },
+    },
+    operatorName: 'Алексеева Алина',
+  });
+
+  assert.match(transcript, /\[00:01\] Алексеева Алина:/);
+  assert.match(transcript, /\[00:16\] Клиент:/);
+  assert.match(transcript, /Добрый день, Кокка Алина\./);
+});

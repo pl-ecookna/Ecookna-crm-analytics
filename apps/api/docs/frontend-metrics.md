@@ -108,7 +108,7 @@
 
 ## 6) Транскрипция
 
-- `transkription` — основной текст для `TranscriptDisplay`
+- `transkription` — основной текст для `TranscriptDisplay`; в деталке API этот текст пересобирается из `transkription_full_json`, если speech-analysis сохранён
 - `transkription_full_json` — источник для speech-метрик
 
 ## 7) Вывод для режима "только callcenter"

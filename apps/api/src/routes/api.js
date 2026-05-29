@@ -5,7 +5,11 @@ import { deleteFromS3 } from '../clients/s3Client.js';
 import { log } from '../utils/logger.js';
 import { requireRole } from '../middleware/auth.js';
 import { getCrmCallById, updateCrmById } from '../db/mainDb.js';
-import { reprocessCallById, reprocessLlmOnlyById } from '../services/mainAnalysisService.js';
+import {
+  getTranscriptFromStoredRow,
+  reprocessCallById,
+  reprocessLlmOnlyById,
+} from '../services/mainAnalysisService.js';
 
 const router = express.Router();
 
@@ -118,7 +122,13 @@ router.get('/crm/calls/:id', async (req, res) => {
       return res.status(404).json({ error: 'Call not found' });
     }
 
-    res.json(rows[0]);
+    const row = rows[0];
+    const transcript = getTranscriptFromStoredRow(row);
+
+    res.json({
+      ...row,
+      transkription: transcript || row.transkription,
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch CRM call', detail: error.message });
   }

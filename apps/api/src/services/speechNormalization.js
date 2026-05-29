@@ -4,6 +4,28 @@ const toNumber = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const toSecondsFromDuration = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return null;
+
+    if (normalized.endsWith('ms')) {
+      const parsed = Number(normalized.slice(0, -2));
+      return Number.isFinite(parsed) ? parsed / 1000 : null;
+    }
+
+    if (normalized.endsWith('s')) {
+      const parsed = Number(normalized.slice(0, -1));
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const pick = (object, ...keys) => {
   for (const key of keys) {
     if (object?.[key] !== undefined) return object[key];
@@ -75,7 +97,7 @@ export const buildTranscriptFromSber = ({ sberJson, operatorName }) => {
     .filter((item) => item?.eou === true && item?.results?.[0]?.normalized_text)
     .map((item) => ({
       channel: normalizeChannel(item.channel ?? 0),
-      start: toSeconds(item.results[0].start) ?? 0,
+      start: toSecondsFromDuration(item.results[0].start) ?? 0,
       text: String(item.results[0].normalized_text || '').trim(),
     }))
     .sort((a, b) => a.start - b.start);

@@ -122,21 +122,27 @@ const getStoredSpeechRawResult = (speechAnalysis) => (
   || speechAnalysis
 );
 
-const getTranscriptFromStoredRow = (row) => {
+export const getTranscriptFromStoredRow = (row) => {
+  const speechAnalysis = getStoredSpeechAnalysis(row);
+  if (speechAnalysis) {
+    const transcript = buildTranscriptFromSpeechAnalysis({
+      provider: speechAnalysis.provider || env.speechProvider,
+      rawResult: getStoredSpeechRawResult(speechAnalysis),
+      operatorName: row.user_name,
+      operatorChannel: env.yandex.operatorChannel,
+      customerChannel: env.yandex.customerChannel,
+    });
+
+    if (transcript.trim()) {
+      return transcript.trim();
+    }
+  }
+
   if (typeof row?.transkription === 'string' && row.transkription.trim()) {
     return row.transkription.trim();
   }
 
-  const speechAnalysis = getStoredSpeechAnalysis(row);
-  if (!speechAnalysis) return '';
-
-  return buildTranscriptFromSpeechAnalysis({
-    provider: speechAnalysis.provider || env.speechProvider,
-    rawResult: getStoredSpeechRawResult(speechAnalysis),
-    operatorName: row.user_name,
-    operatorChannel: env.yandex.operatorChannel,
-    customerChannel: env.yandex.customerChannel,
-  });
+  return '';
 };
 
 const isTransientS3Error = (error) => {
