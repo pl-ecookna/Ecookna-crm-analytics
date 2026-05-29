@@ -256,6 +256,28 @@ const Index = () => {
     return `${minutes} мин ${remainingSeconds} сек`;
   };
 
+  const getProviderLabel = (value: string): string => {
+    switch (value) {
+      case 'sber':
+        return 'SaluteSpeech';
+      case 'yandex':
+        return 'Yandex SpeechSense';
+      default:
+        return value || '—';
+    }
+  };
+
+  const getSelectedSpeechProvider = (call: CrmCallDetails | null): string | null => {
+    if (!call) return null;
+
+    const directProvider = String((call as { provider?: unknown }).provider || '').trim().toLowerCase();
+    if (directProvider) return directProvider;
+
+    const speechAnalysis = call.transkription_full_json as { provider?: unknown } | null | undefined;
+    const provider = String(speechAnalysis?.provider || '').trim().toLowerCase();
+    return provider || null;
+  };
+
   const getTonalityColor = (tonality: string | null) => {
     if (!tonality) return "bg-muted text-muted-foreground";
     const lower = tonality.toLowerCase();
@@ -656,6 +678,11 @@ const Index = () => {
                     <Badge variant={selectedCrmItem.call_type === 'входящий' ? 'default' : 'secondary'}>
                       {selectedCrmItem.call_type || 'Не указан'}
                     </Badge>
+                    {getSelectedSpeechProvider(selectedCrmItem) ? (
+                      <Badge variant="outline">
+                        {getProviderLabel(getSelectedSpeechProvider(selectedCrmItem) || '')}
+                      </Badge>
+                    ) : null}
                     <Badge className={getCallSuccessBadgeClass(selectedCrmItem.call_success)}>
                       {selectedCrmItem.call_success || "Не указан"}
                     </Badge>

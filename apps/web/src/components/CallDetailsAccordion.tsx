@@ -184,17 +184,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
     return `${(value * 100).toFixed(digits)}%`;
   };
 
-  const getProviderLabel = (value: string): string => {
-    switch (value) {
-      case 'sber':
-        return 'SaluteSpeech';
-      case 'yandex':
-        return 'Yandex SpeechSense';
-      default:
-        return value || '—';
-    }
-  };
-
   const formatTimestamp = (value: string | null | undefined) => {
     if (!value) return '—';
     const parsed = new Date(value);
@@ -444,12 +433,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
     return String(value);
   };
 
-  const providerBadgeClass = isSberProvider
-    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-    : isYandexProvider
-      ? 'bg-sky-50 text-sky-700 border-sky-200'
-      : 'bg-muted/10 text-muted-foreground border-muted/20';
-
   const formatBurnoutSigns = (value: unknown): string | null => {
     if (value === null || value === undefined) return null;
 
@@ -597,9 +580,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             <Target className="h-5 w-5 text-primary" />
             <span className="text-base font-medium">Критерии диалога</span>
             <div className="ml-auto flex items-center gap-2">
-              <Badge variant="outline" className={providerBadgeClass}>
-                {getProviderLabel(speechProvider)}
-              </Badge>
               <span className={`text-sm font-medium ${getScoreColor(completed, total)}`}>
                 {completed}/{total}
               </span>
@@ -739,9 +719,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             <Award className="h-5 w-5 text-primary" />
             <span className="text-base font-medium">Оценки и баллы</span>
             <div className="ml-auto flex items-center gap-2">
-              <Badge variant="outline" className={`font-medium ${providerBadgeClass}`}>
-                {getProviderLabel(speechProvider)}
-              </Badge>
               <Star className="h-4 w-4 text-warning" />
               <span className={`text-sm font-medium ${getScoreColor(call.overall_score, 10)}`}>
                 {formatScoreValue(call.overall_score)}/10
@@ -899,9 +876,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
             <TrendingUp className="h-5 w-5 text-primary" />
             <span className="text-base font-medium">Качественные показатели</span>
             <div className="ml-auto flex items-center gap-2">
-              <Badge variant="outline" className={providerBadgeClass}>
-                {getProviderLabel(speechProvider)}
-              </Badge>
               <Badge className={
                 call.call_success === 'Успешный' ? "bg-success/10 text-success border-success/20" : 
                 call.call_success === 'Средний результат' ? "bg-warning/10 text-warning border-warning/20" :
@@ -1395,10 +1369,6 @@ export const CallDetailsAccordion: React.FC<CallDetailsAccordionProps> = ({ call
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                  <div className="flex justify-between gap-4">
-                    <span className="text-muted-foreground">Провайдер:</span>
-                    <span className="font-medium text-right">{speechProvider || '—'}</span>
-                  </div>
                   {isYandexProvider && (
                     <div className="flex justify-between gap-4">
                       <span className="text-muted-foreground">ID диалога:</span>

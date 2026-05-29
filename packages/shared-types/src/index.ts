@@ -5,6 +5,10 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
+export interface RuntimeConfigResponse {
+  speechProvider: SpeechProvider;
+}
+
 export interface CallsQueryParams extends Record<string, unknown> {
   page?: number;
   pageSize?: number;

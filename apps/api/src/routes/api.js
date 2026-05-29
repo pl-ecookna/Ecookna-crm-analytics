@@ -101,6 +101,12 @@ router.get('/crm/calls', async (req, res) => {
   }
 });
 
+router.get('/runtime', async (_req, res) => {
+  res.json({
+    speechProvider: env.speechProvider,
+  });
+});
+
 router.get('/crm/calls/:id', async (req, res) => {
   try {
     const { rows } = await mainPool.query(

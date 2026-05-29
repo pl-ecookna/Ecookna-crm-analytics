@@ -14,6 +14,7 @@ import type {
   CrmMetricsResponse,
   PaginatedResponse,
   PromptDto,
+  RuntimeConfigResponse,
   UpdateAuthUserRequest,
 } from "@ecookna/shared-types";
 
@@ -117,6 +118,7 @@ export const createApiClient = (baseUrl = "") => {
         method: "POST",
       }),
     me: async () => request<AuthMeResponse>("/auth/me"),
+    getRuntimeConfig: async () => request<RuntimeConfigResponse>("/runtime"),
     getUsers: async () => request<AuthUsersResponse>("/auth/users"),
     createUser: async (payload: CreateAuthUserRequest) =>
       request<CreateAuthUserResponse>("/auth/users", {

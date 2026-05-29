@@ -1,14 +1,18 @@
-import { BarChart3, LogOut, Settings } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { BarChart3, Loader2, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { createApiClient } from '@ecookna/api-client';
+
+const api = createApiClient(import.meta.env.VITE_API_BASE_URL || "");
 
 export const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const speechProvider = String(import.meta.env.VITE_SPEECH_PROVIDER || 'yandex').trim().toLowerCase();
+  const [speechProvider, setSpeechProvider] = useState<string | null>(null);
 
   const getProviderLabel = (value: string): string => {
     switch (value) {
@@ -35,6 +39,33 @@ export const Header = () => {
     navigate('/login', { replace: true });
   };
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRuntimeConfig = async () => {
+      try {
+        const data = await api.getRuntimeConfig();
+        if (!cancelled) {
+          setSpeechProvider(String(data.speechProvider || '').trim().toLowerCase() || null);
+        }
+      } catch {
+        if (!cancelled) {
+          setSpeechProvider(String(import.meta.env.VITE_SPEECH_PROVIDER || '').trim().toLowerCase() || null);
+        }
+      }
+    };
+
+    if (user) {
+      void loadRuntimeConfig();
+    } else {
+      setSpeechProvider(null);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -57,9 +88,16 @@ export const Header = () => {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className="font-medium">
-            {getProviderLabel(speechProvider)}
-          </Badge>
+          {speechProvider ? (
+            <Badge variant="outline" className="font-medium">
+              {getProviderLabel(speechProvider)}
+            </Badge>
+          ) : user ? (
+            <Badge variant="outline" className="font-medium text-muted-foreground">
+              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+              Провайдер
+            </Badge>
+          ) : null}
           {user ? (
             <div className="hidden items-center gap-2 rounded-full border bg-background/80 px-3 py-1.5 text-sm md:flex">
               <span className="font-medium">{user.name}</span>
